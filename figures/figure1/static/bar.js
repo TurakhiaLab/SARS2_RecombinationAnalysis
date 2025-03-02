@@ -2,7 +2,7 @@
 import { csvToArray, getMonthsCollection } from "../../common/util.js";
 
 function bar(divID, csvFilename, config) {
-  let margin = { top: 20, right: 100, bottom: 100, left: 100 },
+  const margin = { top: 20, right: 100, bottom: 100, left: 100 },
     width = 1000 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
@@ -25,8 +25,7 @@ function bar(divID, csvFilename, config) {
   // TODO: Use d3.csv() function
   d3.csv(csvFilename, function (data) {
     // Format CSV data
-    let months = csvToArray(data, "Month", String);
-    let counts = csvToArray(data, "Count", parseInt);
+    let counts = csvToArray(data, Y_VAR, parseInt);
 
     const x = d3
       .scaleBand()

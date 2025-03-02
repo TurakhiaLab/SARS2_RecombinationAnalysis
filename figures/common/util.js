@@ -41,7 +41,34 @@ function csvToArray(data, columnName, castAs) {
   return arr;
 }
 
+// TODO: Change to accept variable number of key-value pairs
+// ie) one pass over data
+function csvToMap(data, key, value, castValueAs) {
+  // Assumes that key is a string
+  let map = new Map();
+  for (let i = 0; i < data.length; i++) {
+    map.set(data[i][key], castValueAs(data[i][value]));
+  }
+  return map;
+}
+
+function getUniqueValues(data, key) {
+  let values = [];
+  data.forEach((elem) => {
+    const val = elem[key];
+    if (!values.includes(val)) {
+      values.push(val);
+    }
+  });
+  return values;
+}
+
 // Constants
 export { YEARS, MONTHS, QUARTERS };
 // Functions
-export { getMonthsCollection, csvToArray };
+export {
+  getMonthsCollection,
+  csvToArray,
+  csvToMap,
+  getUniqueValues,
+};
