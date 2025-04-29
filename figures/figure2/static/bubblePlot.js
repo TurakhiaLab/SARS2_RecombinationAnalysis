@@ -129,7 +129,7 @@ function bubblePlot(divID, CSVFilename, statsCSVFilename, config) {
           opacity: 0.1,
           width: 1,
           X_VAR: CX_VAR,
-          Y0_VAR: PERCENTILE_9999_VAR,
+          Y0_VAR: MAX_VAR,
           Y1_VAR: PERCENTILE_99_VAR,
           castValueAs: parseFloat,
           boldOutline: true,

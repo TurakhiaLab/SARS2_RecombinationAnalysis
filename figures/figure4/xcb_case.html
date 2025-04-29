@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Recombinant Case Studies</title>
+    <meta charset="utf-8" />
+  </head>
+
+  <body>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script type="module" src="static/hist.js"></script>
+    <script type="module" src="static/fitnessHist.js"></script>
+    <script type="module" src="static/track.js"></script>
+    <script type="module" src="static/trackUtil.js"></script>
+    <script src="../common/util.js" type="module"></script>
+
+    <div id="track"></div>
+    <div id="hist"></div>
+    <script type="module">
+      import { hist } from "./static/hist.js";
+      import { track } from "./static/track.js";
+
+      // Input data
+      const acceptorData = "data/node_1786275.tsv";
+      const donorData = "data/node_1617133.tsv";
+      const informativeSitesData = "data/xcb_informative_sites.tsv";
+      const trackDivID = "#track";
+      const trackConfig = {
+        BREAKPOINT1_START: 19955,
+        BREAKPOINT1_END: 22882,
+        INFORMATIVE_SITES: informativeSitesData,
+      };
+      track(donorData, acceptorData, trackDivID, trackConfig);
+    </script>
+  </body>
+</html>
