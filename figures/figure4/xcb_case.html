@@ -1,35 +1,61 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <title>Recombinant Case Studies</title>
+    <title>Figure 4a</title>
     <meta charset="utf-8" />
   </head>
 
   <body>
-    <script src="https://d3js.org/d3.v4.js"></script>
-    <script type="module" src="static/hist.js"></script>
-    <script type="module" src="static/fitnessHist.js"></script>
-    <script type="module" src="static/track.js"></script>
-    <script type="module" src="static/trackUtil.js"></script>
-    <script src="../common/util.js" type="module"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <button id="downloadButton" type="submit" value="Submit">
+      Download SVG
+    </button>
     <div id="track"></div>
     <div id="hist"></div>
     <script type="module">
       import { hist } from "./static/hist.js";
       import { track } from "./static/track.js";
+      import { downloadSVG } from "../common/util.js";
 
+      const trackDivID = "#track";
       // Input data
       const acceptorData = "data/node_1786275.tsv";
       const donorData = "data/node_1617133.tsv";
       const informativeSitesData = "data/xcb_informative_sites.tsv";
-      const trackDivID = "#track";
-      const trackConfig = {
+      const config = {
+        // Only 1 breakpoint for this recombinant
+        NUM_BREAKPOINTS: 1,
         BREAKPOINT1_START: 19955,
         BREAKPOINT1_END: 22882,
         INFORMATIVE_SITES: informativeSitesData,
+        BORDER_HEIGHT: 2000,
+        OUTER_BUFFER: 50,
+        margin: { top: 100, right: 100, bottom: 100, left: 100 },
+        width: 3500,
+        height: 2000 - 50,
       };
-      track(donorData, acceptorData, trackDivID, trackConfig);
+
+      const width = config["width"];
+      const height = config["height"];
+      const margin = config["margin"];
+
+      let selection = d3.select(trackDivID).append("div");
+      let svg = selection
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      track(svg, donorData, acceptorData, config);
+
+      // Download button for plot svg
+      const svgFilename = "figure4.svg";
+      document
+        .getElementById("downloadButton")
+        .addEventListener("click", () => {
+          downloadSVG(svg, svgFilename);
+        });
     </script>
   </body>
 </html>
