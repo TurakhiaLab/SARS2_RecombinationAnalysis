@@ -17,13 +17,25 @@
       import { downloadSVG } from "../../common/util.js";
 
       const divID = "#bar";
-      const filename = "data/rivet_pango_filtration_test.csv";
+      const filename = "data/rivet_pango_filtration.csv";
       const config = {
         data: filename,
         key: "Flag",
         value: "Value",
         "bar-color": "#ff8c00",
-        margin: { top: 100, right: 100, bottom: 100, left: 200 },
+        "x-title": "Frequency",
+        "y-title": "Filtration Checks",
+        "axis-title-size": "25px",
+        "axis-tick-size": "20px",
+
+        scaleBandMap: {
+          PASS: "PASS",
+          Too_many_mutations_near_INDELs: "Too Many Mutations Near INDELs",
+          Suspicious_mutation_clump: "Suspicious Mutation Clump",
+          Informative_sites_clump: "Informative Sites Clump",
+        },
+
+        margin: { top: 100, right: 100, bottom: 100, left: 350 },
         width: 800,
         height: 600,
       };
