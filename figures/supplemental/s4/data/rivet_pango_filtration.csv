@@ -1,0 +1,5 @@
+Flag,Value
+PASS,8
+Too_many_mutations_near_INDELs,8
+Suspicious_mutation_clump,3
+Informative_sites_clump,1

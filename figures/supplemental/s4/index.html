@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Figure S4</title>
+    <meta charset="utf-8" />
+  </head>
+
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <button id="downloadButton" type="submit" value="Submit">
+      Download SVG
+    </button>
+
+    <div id="bar"></div>
+    <script type="module">
+      import { bar } from "./static/bar.js";
+      import { downloadSVG } from "../../common/util.js";
+
+      const divID = "#bar";
+      const filename = "data/rivet_pango_filtration_test.csv";
+      const config = {
+        data: filename,
+        key: "Flag",
+        value: "Value",
+        "bar-color": "#ff8c00",
+        margin: { top: 100, right: 100, bottom: 100, left: 200 },
+        width: 800,
+        height: 600,
+      };
+      const width = config["width"];
+      const height = config["height"];
+      const margin = config["margin"];
+
+      let selection = d3.select(divID).append("div");
+      let svg = selection
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      bar(svg, config);
+
+      // Download button for plot svg
+      const svgFilename = "figureS4.svg";
+      document
+        .getElementById("downloadButton")
+        .addEventListener("click", () => {
+          downloadSVG(svg, svgFilename);
+        });
+    </script>
+  </body>
+</html>
