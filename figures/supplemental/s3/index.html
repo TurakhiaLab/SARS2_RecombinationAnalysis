@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Figure S3</title>
+    <meta charset="utf-8" />
+  </head>
+
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <button id="downloadButton" type="submit" value="Submit">
+      Download SVG
+    </button>
+
+    <div id="bar"></div>
+    <script type="module">
+      import { bar } from "./static/bar.js";
+      import { downloadSVG } from "../../common/util.js";
+
+      const divID = "#bar";
+      const config = {
+        // Input data files
+        "rivet-pango-data": "data/rivet-pango-summary.csv",
+        "branch-length-data": "data/pango_branch_lengths.csv",
+
+        // Variables
+        X_VAR: "BranchLength",
+        Y_VAR: "PangoRecombinant",
+
+        "custom-color-function": function (
+          distance,
+          jaccard_index,
+          branch_length,
+        ) {
+          // RIVET-Inferred Node Matches Exactly
+          if (distance == 0 && branch_length >= 3) {
+            // green
+            return "#39e75f";
+          }
+          // RIVET-Inferred Node within Neighbourhood
+          else if (
+            (distance == 1 || distance == 2 || jaccard_index > 0.97) &&
+            branch_length >= 3
+          ) {
+            // Light blue
+            return "#00dee6";
+          }
+          // RIVET-Inferred Node within Neighbourhood (Pango-node Branch < 3)
+          else if (distance == 1 || distance == 2 || jaccard_index > 0.97) {
+            // yellow
+            return "#e6b400";
+          }
+          // Uninferred by RIVET (Pango-node Branch < 3)
+          else {
+            return "gray";
+          }
+        },
+
+        // Config for the figure legend
+        legend: true,
+        legendLabels: [
+          "RIVET-Inferred Node Matches Exactly",
+          "RIVET-Inferred Node within Neighbourhood",
+          "RIVET-Inferred Node within Neighbourhood (Pango-node Branch < 3)",
+          "Uninferred by RIVET (Pango-node Branch < 3)",
+        ],
+        //'legendColors': ['#ff8c00', '#39e75f', '#e6b400', 'red'],
+        legendColors: ["#39e75f", "#00dee6", "#e6b400", "grey"],
+        yAxisTitle: "Pango-Designated Recombinants",
+        xAxisTitle: "Branch Length of Pango-Designated Node",
+
+        margin: { top: 100, right: 100, bottom: 100, left: 200 },
+        width: 1100,
+        height: 1500,
+      };
+      const width = config["width"];
+      const height = config["height"];
+      const margin = config["margin"];
+
+      let selection = d3.select(divID).append("div");
+      let svg = selection
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      bar(svg, config);
+
+      // Download button for plot svg
+      const svgFilename = "figureS3.svg";
+      document
+        .getElementById("downloadButton")
+        .addEventListener("click", () => {
+          downloadSVG(svg, svgFilename);
+        });
+    </script>
+  </body>
+</html>
