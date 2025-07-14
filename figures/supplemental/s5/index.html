@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Figure S5</title>
+    <meta charset="utf-8" />
+  </head>
+
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <button id="downloadButton" type="submit" value="Submit">
+      Download SVG
+    </button>
+    <div id="bubble"></div>
+
+    <script type="module">
+      import { bubblePlot } from "./static/bubblePlot.js";
+      import { downloadSVG } from "../../common/util.js";
+
+      const bubbleScalingColor = function (size) {
+        if (size < 50) {
+          return "gray";
+        } else if (size >= 50 && size < 500) {
+          return "green";
+        } else if (size >= 500 && size < 3000) {
+          return "orange";
+        } else if (size >= 3000 && size < 50000) {
+          return "red";
+        } else if (size >= 50000) {
+          return "purple";
+        }
+      };
+      const divID = "#bubble";
+
+      const config = {
+        pangoClustersData: "data/pango-all-lineage-stats.csv",
+        monthlyFitnessData: "data/monthly_fitness_stats.csv",
+
+        // Main Plot Data
+        x: "Month",
+        y: "LogScore",
+        r: "ClusterSize",
+
+        // Statistics add for additional curves
+        mean: "LogMean",
+        max: "LogMax",
+        median: "LogMedian",
+        percentile99: "LogPercentile99",
+        percentile90: "LogPercentile90",
+        percentile9999: "LogPercentile9999",
+
+        // Plot dimensions
+        margin: {
+          top: 100,
+          right: 200,
+          bottom: 150,
+          left: 150,
+        },
+        width: 1800,
+        height: 900,
+
+        // Plot axis settings
+        axisTickLabelSize: "15",
+        axisTitleSize: "25px",
+        // Axis Titles
+        yAxisTitle: "Fitness R/RA (log)",
+        xAxisTitle: "Month",
+
+        // Plotting settings and statistics
+        bubbleColoringCallable: bubbleScalingColor,
+        averageCurve: false,
+        maxCurve: false,
+        medianCurve: false,
+        shadeArea: false,
+
+        // Config for the figure legend
+        legend: true,
+        legendLabels: [
+          "less than 50 descendants",
+          "between 50 and 500 descendants",
+          "between 500 and 3000 descendants",
+          "between 3000 and 20000 descendants",
+          "greater than 50000 descendants",
+        ],
+        legendColors: ["gray", "green", "orange", "red", "purple"],
+
+        // Legend Positioning
+        legendCX: 35,
+        legendCY: 60,
+        legendXAttr: 55,
+        legendYAttr: 57,
+        legendFontSize: "16px",
+
+        // Plot Interactivity settings
+        toolTip: { div: "#bubble" },
+      };
+
+      const width = config["width"];
+      const height = config["height"];
+      const margin = config["margin"];
+
+      let selection = d3.select(divID).append("div");
+      let svg = selection
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // Graph for fitness of Pango-lineages over time
+      bubblePlot(svg, config);
+
+      // Download button for plot svg
+      const svgFilename = "figureS5.svg";
+      document
+        .getElementById("downloadButton")
+        .addEventListener("click", () => {
+          downloadSVG(svg, svgFilename);
+        });
+    </script>
+  </body>
+</html>
