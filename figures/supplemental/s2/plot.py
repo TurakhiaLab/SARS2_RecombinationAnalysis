@@ -39,7 +39,7 @@ def get_data(filename):
     Numpy Array
         The Chronumental dates
     """
-    df = pl.read_csv(filename)  # .select(METADATA_COL, CHRON_COL)
+    df = pl.read_csv(filename)
     metadata_dates = df[METADATA_COL].to_numpy()
     chron_dates = df[CHRON_COL].to_numpy()
     assert (len(metadata_dates) == len(chron_dates))
@@ -139,6 +139,7 @@ def main():
     df = pl.DataFrame(
         {PLOT_CONFIG["y_label"]: chron_values, PLOT_CONFIG["x_label"]: metadata_values}
     )
+    #scatterplot(df, encoded_labels) #, PLOT_CONFIG["save_as"])
     scatterplot(df, encoded_labels, PLOT_CONFIG["save_as"])
     print("Plot successfully saved: {}".format(PLOT_CONFIG["save_as"]))
     return
