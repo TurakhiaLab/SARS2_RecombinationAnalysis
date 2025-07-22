@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Figure 3</title>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+    <!-- Simple Statistics lib -->
+    <script src="https://unpkg.com/simple-statistics@7.8.2/dist/simple-statistics.min.js"></script>
+
+    <button id="downloadButton" type="submit" value="Submit">
+      Download SVG
+    </button>
+    <div id="scatterplot"></div>
+    <script type="module">
+                import { scatter_with_marginal_histograms } from "./static/scatter_with_marginal_histograms.js";
+                import { downloadSVG } from "../common/util.js";
+                import { histogram } from "./static/histogram.js";
+
+                const scatterColor = function (score, stats) {
+                  if (score > stats["percentile_99"]) {
+                    return "red";
+                  } else if (
+                    score > stats["quartile_75"] &&
+                    score <= stats["percentile_99"]
+                  ) {
+                    return "#124E78";
+                  } else if (
+                    score < stats["quartile_75"] &&
+                    score > stats["quartile_50"]
+                  ) {
+                    return "#93D3AE";
+                  } else if (score < stats["quartile_50"]) {
+                    return "gray";
+                  } else {
+                    return "black";
+                  }
+                };
+
+                const config = {
+                  title: "",
+                  yAxisTitle: "",
+                  xAxisTitle: "",
+
+                  "time-interval": "month",
+                  histogram: true,
+                  "snv-histogram": false,
+                  "snv-data": "data/snp_histogram.csv",
+
+                  scatterDivID: "#scatterplot",
+
+                  // Plot settings
+                  baseline: true, // Horizontal baseline for average parental divergence
+                  verticalBaseline: true,
+                  axisTickLabelSize: "15",
+                  showBarQuantity: false,
+
+                  // Define data
+                  Score: "RecombFitnessNormalizedByMaxParents",
+                  DiversityScore: "DiversityScore",
+                  ClusterSize: "UShERClusterSize",
+                  ParentalDiversity: "ParentsHD",
+
+                  // Additional curves to overlay on the plot
+                  capacity: false,
+                  variance: false,
+                  stddev: false,
+
+                  // Optional parameter to color Pango-recombinants on the scatter plot
+                  pangoMapCSVFilename: "",
+                  "label-pango": false,
+
+                  //Color by function for scatterplot points
+                  colorby: scatterColor,
+
+                  // Plot dimensions
+                  margin: {
+                    top: 100,
+                    right: 200,
+                    bottom: 150,
+                    left: 150,
+                  },
+                  width: 2000,
+                  height: 1300,
+
+                  // Config for the figure legend
+                  legend: true,
+                  legendLabels: ["Top 1%", "Top 1-25%", "Top 25-50%", "Top 50-100%"],
+                  legendColors: ["red", "#124E78", "#93D3AE", "gray"],
+
+                  // Legend Positioning
+                  legendCX: 1240,
+                  legendCY: 200,
+                  legendXAttr: 1260,
+                  legendYAttr: 197,
+                  legendFontSize: "20px",
+                };
+
+                let svg = d3
+                  .select(config["scatterDivID"])
+                  .append("svg")
+                  .attr("width", config["width"])
+                  .attr("height", config["height"])
+                  .append("g")
+                  .attr(
+                    "transform",
+                    "translate(" +
+                      config["margin"].left +
+                      "," +
+                      config["margin"].top +
+                      ")",
+                  );
+
+                //const snvBarPlotDivID = "#snv-fitness-hist";
+                //const snvDataFile = "data/snp_histogram.csv";
+                //histogram(snvBarPlotDivID, snvDataFile, config);
+
+                scatter_with_marginal_histograms(
+                  svg,
+                  "data/rivet_recombs_data.csv",
+                  "data/monthly_fitness_stats.csv",
+                  config,
+                );
+
+                const svgFilename = "figure3.svg";
+                document
+                  .getElementById("downloadButton")
+                  .addEventListener("click", () => {
+                    downloadSVG(svg, svgFilename);
+                  });
+    </script>
+  </body>
+</html>
