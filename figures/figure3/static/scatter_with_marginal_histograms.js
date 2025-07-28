@@ -1,20 +1,16 @@
 import {
-  bin,
   csvToArray,
   getMonthsCollection,
-  max,
   minMaxValueFromColumn,
   roundTo,
 } from "../../common/util.js";
-// TODO: add plotUtils.js module functions
 
-// TODO: Move to data files into config
-async function scatter_with_marginal_histograms(svg, csvFilename, statsFilename, config) {
+async function scatter_with_marginal_histograms(svg, config) {
   // Constants
   const width =
       config["width"] - config["margin"].left - config["margin"].right,
     height = config["height"] - config["margin"].top - config["margin"].bottom;
-  
+
   const SCATTER_HEIGHT = 150;
   const SCATTER_WIDTH = width - 200;
   const SCATTER_RADIUS = 5.0;
@@ -30,72 +26,22 @@ async function scatter_with_marginal_histograms(svg, csvFilename, statsFilename,
   YEAR_MONTH.shift();
 
   // Get input recomb data and statistics data
-  const statsData = await d3.csv(statsFilename);
-  const recombData = await d3.csv(csvFilename);
+  const statsData = await d3.csv(config["statsFilename"]);
+  const recombData = await d3.csv(config["filename"]);
 
-  //TODO: Clean up, Data formatting
-  let months = [];
-  let RIVET_DATA_OBJECT = [];
-  let month_data = new Map();
-  let diversity_scores_by_month = new Map();
-  let norm_by_min_scores = [];
-
-  // TODO: Clean up
-  for (let i = 0; i < recombData.length; ++i) {
-    let acceptor_fitness = parseFloat(recombData[i]["AcceptorFitness"]);
-    let donor_fitness = parseFloat(recombData[i]["DonorFitness"]);
-    // Raw recomb score
-    let score = parseFloat(recombData[i][config["Score"]]);
-
-    let donor_score = parseFloat(recombData[i]["DonorFitness"]);
-    let acceptor_score = parseFloat(recombData[i]["AcceptorFitness"]);
-    let min_parents = Math.min(donor_score, acceptor_score);
-
-    let recomb_score_norm_by_min = score / min_parents;
-    let recomb_score_norm_by_max = parseFloat(
-      recombData[i]["RecombFitnessNormalizedByMaxParents"],
-    );
-
-    let diversity_score = parseFloat(recombData[i][config["DiversityScore"]]);
-    let parent_HD_score = parseFloat(recombData[i]["ParentsHD"]);
-    let cluster_size = parseInt(recombData[i][config["ClusterSize"]]);
-    let d = {
-      Month: recombData[i]["Month"],
-      Score: score,
-      Strain: recombData[i]["Strain"],
-      Node: recombData[i]["Node"],
-      ParentsHD: parent_HD_score,
-      ClusterSize: cluster_size,
-      NumNT: recombData[i]["NumNT"],
-      NumAA: recombData[i]["NumAA"],
-      NumTopKAA: recombData[i]["NumTopKAA"],
-      // Raw R/RA recombinant fitness score
-      relativeFitnessScore: recombData[i]["Score"],
-      scoreNormByMinParents: recomb_score_norm_by_min,
-      scoreNormByMaxParents: recomb_score_norm_by_max,
-      DonorFitness: donor_fitness,
-      AcceptorFitness: acceptor_fitness,
+  // Format monthly statistics values
+  let statLookup = {};
+  statsData.forEach((d) => {
+    const key = d.Month;
+    if (key in statLookup) {
+      alert("Month already recorded in stats");
+    }
+    statLookup[key] = {
+      Percentile50: parseFloat(d.Percentile50),
+      Percentile75: parseFloat(d.Percentile75),
+      Percentile99: parseFloat(d.Percentile99),
     };
-    // num_aa_list.push(parseInt(recombData[i]["NumAA"]));
-
-    norm_by_min_scores.push(recomb_score_norm_by_min);
-
-    RIVET_DATA_OBJECT.push(d);
-    months[i] = recombData[i]["Month"];
-
-    // Aggregate scatterplot data into month bins
-    if (month_data.has(recombData[i]["Month"])) {
-      month_data.get(recombData[i]["Month"]).push(score);
-    } else {
-      month_data.set(recombData[i]["Month"], [score]);
-    }
-
-    // Aggregate diversity data into month bins
-    if (diversity_scores_by_month.has(recombData[i]["Month"])) {
-    } else {
-      diversity_scores_by_month.set(recombData[i]["Month"], diversity_score);
-    }
-  }
+  });
 
   // Aggregated data and stats
   const divergence_hd_scores = csvToArray(recombData, "ParentsHD", parseInt);
@@ -118,16 +64,6 @@ async function scatter_with_marginal_histograms(svg, csvFilename, statsFilename,
     parseFloat,
   );
 
-  let HD_BINS = bin(divergence_hd_scores, 0, 120, 5);
-  const HD_BINS_KEYS = HD_BINS.flatMap((obj) => obj["key"]);
-  const HD_BINS_VALUES = HD_BINS.flatMap((obj) => obj["value"]);
-  const MAX_KEY = Math.max(...HD_BINS_KEYS);
-  const MAX_VALUE = Math.max(...HD_BINS_VALUES);
-  let NORM_FITNESS_BINS = bin(scores, 0, maxScore, 0.05, 2);
-  const NORM_FITNESS_KEYS = NORM_FITNESS_BINS.flatMap((obj) => obj["key"]);
-  const NORM_FITNESS_VALUES = NORM_FITNESS_BINS.flatMap((obj) => obj["value"]);
-  const MAX_NORM_FITNESS = Math.max(...NORM_FITNESS_VALUES);
-
   // Define scales
   let x = d3
     .scaleLinear()
@@ -139,33 +75,36 @@ async function scatter_with_marginal_histograms(svg, csvFilename, statsFilename,
     .domain([0.0, maxParentHD + 1.0])
     .range([height, SCATTER_HEIGHT]);
 
-
   // Define axes
   const xAxis = d3.axisBottom(x).ticks(20);
   const yLeftAxis = d3.axisLeft(y).ticks(10);
 
-
   const yHistBinWidth = 5;
-  const yHistDomainStart= 0;
+  const yHistDomainStart = 0;
   const yHistDomainEnd = 120;
-  const yHistogramThresholds = d3.range(yHistDomainStart + yHistBinWidth, yHistDomainEnd + yHistBinWidth, yHistBinWidth)
+  const yHistogramThresholds = d3
+    .range(
+      yHistDomainStart + yHistBinWidth,
+      yHistDomainEnd + yHistBinWidth,
+      yHistBinWidth,
+    )
     .map((val) => val);
 
   let yHistogram = d3
     .bin()
-    .value((d) => d[config['ParentalDiversity']])
+    .value((d) => d[config["ParentalDiversity"]])
     .domain([yHistDomainStart, yHistDomainEnd])
     .thresholds(yHistogramThresholds);
 
   let yHistogramBins = yHistogram(recombData);
-  const [minYCount, maxYCount] = d3.extent(yHistogramBins.map(d => d.length));
+  const [minYCount, maxYCount] = d3.extent(yHistogramBins.map((d) => d.length));
 
   let xRight = d3
     .scaleLinear()
     .domain([yHistDomainStart, yHistDomainEnd])
     .range([height, SCATTER_HEIGHT]);
 
-    const OCCURENCE_BUFFER = 10;
+  const OCCURENCE_BUFFER = 10;
   let yRightTop = d3
     .scaleLinear()
     .domain([0, maxYCount + OCCURENCE_BUFFER])
@@ -181,29 +120,30 @@ async function scatter_with_marginal_histograms(svg, csvFilename, statsFilename,
   const xAxisRight = d3.axisRight(xRight).tickValues([]);
 
   svg
-  .selectAll(".rightHist")
-  .data(yHistogramBins)
-  .join("rect")
-  .attr("x", d => {
-    return yRightTop(0);
-  })
-  .attr("width", d => {
-    return yRightTop(d.length) - SCATTER_WIDTH + 1;
-  })
-  .attr("y", d => {
-    return xRight(d.x1);
-  })
-  .attr("height", d => {
-    const w = Math.max(0, xRight(d.x0) - xRight(d.x1) - BAR_PADDING);
-    return w;
-  })
-  .attr("fill", "orange")
-  .attr("stroke", "black");
+    .selectAll(".rightHist")
+    .data(yHistogramBins)
+    .join("rect")
+    .attr("x", (d) => {
+      return yRightTop(0);
+    })
+    .attr("width", (d) => {
+      return yRightTop(d.length) - SCATTER_WIDTH + 1;
+    })
+    .attr("y", (d) => {
+      return xRight(d.x1);
+    })
+    .attr("height", (d) => {
+      const w = Math.max(0, xRight(d.x0) - xRight(d.x1) - BAR_PADDING);
+      return w;
+    })
+    .attr("fill", "orange")
+    .attr("stroke-width", 0.5)
+    .attr("stroke", "black");
 
-   let x_top = d3
-   .scaleLinear()
-   .domain([0, maxScore + 0.1])
-   .range([0, SCATTER_WIDTH]);
+  let x_top = d3
+    .scaleLinear()
+    .domain([0, maxScore + 0.1])
+    .range([0, SCATTER_WIDTH]);
 
   const binWidth = 0.05;
   const domainStart = 0.0;
@@ -219,7 +159,7 @@ async function scatter_with_marginal_histograms(svg, csvFilename, statsFilename,
     .thresholds(thresholds);
 
   let bins = histogram(recombData);
-  const [minXCount, maxXCount] = d3.extent(bins.map(d => d.length));
+  const [minXCount, maxXCount] = d3.extent(bins.map((d) => d.length));
   const xAxisTop = d3.axisTop(x_top).tickValues([]);
 
   const TOP_HISTOGRAM_OCC_BUFFER = 100;
@@ -251,6 +191,7 @@ async function scatter_with_marginal_histograms(svg, csvFilename, statsFilename,
     })
     // Histogram bar color
     .style("fill", "orange")
+    .attr("stroke-width", 0.5)
     .attr("stroke", "black");
 
   // x-axis for main Y-axis histogram
@@ -287,6 +228,7 @@ async function scatter_with_marginal_histograms(svg, csvFilename, statsFilename,
 
   // Add frequency count to the top of each bar, default false
   if (config["showBarQuantity"]) {
+    /*
     svg
       .selectAll("text")
       .data(NORM_FITNESS_BINS)
@@ -301,13 +243,13 @@ async function scatter_with_marginal_histograms(svg, csvFilename, statsFilename,
         }
       })
       .attr("x", function (d) {
-        // NOTE: CUSTOM SHIFTING
         return x_top(d.key) - (x_top.bandwidth() / 2 - 45);
       })
       .attr("y", function (d) {
         const count = d.value;
         return yLeftTop(count) - 5;
       });
+      */
   }
 
   // Add y-axis for top (x-axis) histogram
@@ -423,40 +365,14 @@ async function scatter_with_marginal_histograms(svg, csvFilename, statsFilename,
       return x(d[config["Score"]]);
     })
     .attr("cy", function (d) {
-      // Y-axis point will be the divergence of parents,
+      // Y-axis point will be the divergence of parents
       return y(d.ParentsHD);
     })
     .attr("r", SCATTER_RADIUS)
     .style("fill", function (d) {
-      const recomb_fitness = d.relativeFitnessScore;
-      /*
-      const stats = {
-        percentile_99: percentile_99_map.get(d.Month),
-        quartile_75: quartiles_map.get(d.Month)[2],
-        quartile_50: quartiles_map.get(d.Month)[1],
-      };
-      */
-      //return getColorByScore(recomb_fitness, stats);
-      return "black";
-      /*
-                  let size = d.ClusterSize;
-                  let num_aa = d["NumAA"];
-                  let num_top_aa = d["NumTopKAA"];
-                  let percent_top_mutations = Math.floor((num_top_aa / num_aa) *
-               100);
-                  //  Experimenting with coloring for by sample circulating fitness
-
-                  // Recomb fitness normalized by max of parental // fitness
-                  let recomb_fitness = d.relativeFitnessScore;
-                  let average_fitness = average_fitness_map.get(d.Month);
-                  let percentile_95 = percentile_95_map.get(d.Month);
-                  let quartile_25 = quartiles_map.get(d.Month)[0];
-                  let quartile_50 = quartiles_map.get(d.Month)[1];
-                  let quartile_75 = quartiles_map.get(d.Month)[2];
-                  let percentile_99 = percentile_99_map.get(d.Month);
-                  let max = max_fitness_map.get(d.Month);
-                  let ten_percent_of_max = max - max * 0.1;
-                  */
+      const recomb_fitness = d[config["RawScore"]];
+      const month = d.Month;
+      return getColorByScore(recomb_fitness, month, statLookup);
     });
 
   // Add horizontal dashed line at average divergence on y-axis
