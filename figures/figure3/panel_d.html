@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <button id="downloadButton" type="submit" value="Submit">Download SVG</button>
+
+  <div id="chart"></div>
+  <script type="module">
+    import { downloadSVG } from "../common/util.js";
+    import { histogram } from "./static/min_max_histogram.js";
+    const config = {
+      title: "",
+      yAxisTitle: "",
+      xAxisTitle: "",
+      "time-interval": "month",
+
+      // Plot settings
+      baseline: false,
+      verticalBaseline: false,
+      axisTickLabelSize: "15",
+      showBarQuantity: false,
+
+      Score: "NormFitness",
+      Month: "Date",
+      DiversityScore: "DiversityScore",
+      ClusterSize: "UShERClusterSize",
+
+      div: "#chart",
+      // Plot data
+      filename: "data/recomb_fitness_normalized.csv",
+      statsFilename: "../../data/monthly_fitness_stats.csv",
+
+      histConfig: {
+        binWidth: 0.5,
+        domainStart: -10,
+        domainEnd: 10,
+      },
+
+      // Plot dimensions
+      margin: {
+        top: 100,
+        right: 200,
+        bottom: 150,
+        left: 150,
+      },
+      width: 1500,
+      height: 1000,
+    };
+
+    let svg = d3
+      .select(config["div"])
+      .append("svg")
+      .attr("width", config["width"])
+      .attr("height", config["height"])
+      .append("g")
+      .attr(
+        "transform",
+        "translate(" + config["margin"].left + "," + config["margin"].top + ")",
+      );
+
+    histogram(svg, config);
+
+    const svgFilename = "figure3d.svg";
+    document.getElementById("downloadButton").addEventListener("click", () => {
+      downloadSVG(svg, svgFilename);
+    });
+  </script>
+</html>
