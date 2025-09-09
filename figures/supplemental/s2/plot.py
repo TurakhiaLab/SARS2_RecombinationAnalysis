@@ -8,6 +8,7 @@ import polars as pl
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
+from scipy import stats
 
 # Dates data
 DATES_FILENAME = "data/dates.csv"
@@ -126,6 +127,15 @@ def scatterplot(df, encoded_labels, SAVE=None):
     else:
         plt.show()
 
+    slope, intercept, r_value, p_value, std_err = stats.linregress(
+        df[x_label], df[y_label]
+    )
+    print("Slope: ", slope)
+    print("y-intercept: ", intercept)
+    print("R-value: ", r_value)
+    print("R-squared value: ", r_value**2)
+    print("p-value: ", p_value)
+    print("Std error: ", std_err)
 
 def main():
     # Create output image directory, if doesn't exist

@@ -108,5 +108,26 @@ async function histogram(svg, config) {
     .attr("dominant-baseline", "central")
     .style("fill", "black")
     .style("font-size", "20px");
+
+  // Vertical lines at x = 0 and x = 1
+  svg
+    .append("line")
+    .attr("x1", x(1.0))
+    .attr("y1", SCATTER_HEIGHT - 50)
+    .attr("x2", x(1.0))
+    .attr("y2", height)
+    .style("stroke", "black")
+    .style("stroke-dasharray", "10, 5")
+    .style("stroke-width", "2px");
+
+  svg
+    .append("line")
+    .attr("x1", x(0))
+    .attr("y1", SCATTER_HEIGHT - 50)
+    .attr("x2", x(0))
+    .attr("y2", height)
+    .style("stroke", "black")
+    .style("stroke-dasharray", "10, 5")
+    .style("stroke-width", "2px");
 }
 export { histogram };

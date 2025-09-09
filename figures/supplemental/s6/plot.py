@@ -8,6 +8,7 @@ import polars as pl
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
+from scipy import stats
 
 FILENAME = "data/pyro_vs_covfit_fitness.csv"
 PYRO_COL = "PyRo"
@@ -85,6 +86,16 @@ def plot(df):
         plt.show()
     else:
         plt.savefig(config["save_as"], format="svg")
+
+    slope, intercept, r_value, p_value, std_err = stats.linregress(
+        df[x_label], df[y_label]
+    )
+    print("Slope: ", slope)
+    print("y-intercept: ", intercept)
+    print("R-value: ", r_value)
+    print("R-squared value: ", r_value**2)
+    print("p-value: ", p_value)
+    print("Std error: ", std_err)
 
 
 def main():
