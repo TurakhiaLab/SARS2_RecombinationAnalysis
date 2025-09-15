@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Figure 1b</title>
+    <meta charset="utf-8" />
+  </head>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+  <style>
+    .diversityAxis line {
+      stroke: blue;
+    }
+
+    .diversityAxis path {
+      stroke: blue;
+    }
+
+    .diversityAxis text {
+      fill: blue;
+    }
+
+    .infectionsAxis line {
+      stroke: green;
+    }
+
+    .infectionsAxis path {
+      stroke: green;
+    }
+
+    .infectionsAxis text {
+      fill: green;
+    }
+
+    .recombinantsAxis line {
+      stroke: red;
+    }
+
+    .recombinantsAxis path {
+      stroke: red;
+    }
+
+    .recombinantsAxis text {
+      fill: red;
+    }
+  </style>
+
+  <button id="downloadButton" type="submit" value="Submit">Download SVG</button>
+  <div id="panelb"></div>
+
+  <script type="module">
+    import { downloadSVG } from "../common/util.js";
+    import { panelb } from "./static/figure1.js";
+
+    const config = {
+      divID: "#panelb",
+      // Data file
+      recombFilename: "../../data/rivet_recombs_data.csv",
+
+      // Figure wide settings
+      title: "",
+      axisTitleSize: "12px",
+      LowerAxisTitleSize: "16px",
+      UpperYAxisTitle: "",
+      "largest-lineage-curve": false,
+      "show-lineage-diversity": false,
+      yRightAxisTitle: "",
+      yLeftAxisTitle: "",
+      yOuterRightAxisTitle: "",
+      xAxis: false,
+      "show-hist": false,
+      xAxisTitle: "",
+      axisTickSize: "12px",
+      rectOpacity: 1.0,
+
+      // Additional statistics curves to overlay on the plot
+      baseline: false,
+      best_fit: false,
+      capacity: false,
+      variance: false,
+      stddev: false,
+
+      // Additional counting/aggregation curves to add
+      numPangoRecombs: false,
+      numRivetRecombs: false,
+      showDiversityCurve: true,
+      showCaseCurve: false,
+
+      // Plot legend config
+      legend: false,
+      legendLabels: [
+        "Number of Detected Recombinants",
+        "Number of Worldwide Infections",
+        "Standing Genetic Diversity",
+      ],
+      legendColors: ["red", "green", "blue"],
+
+      margin: { top: 100, right: 500, bottom: 110, left: 100 },
+      width: 1000,
+      height: 500,
+    };
+
+    const width = config["width"];
+    const height = config["height"];
+    const margin = config["margin"];
+
+    let selection = d3.select(config["divID"]).append("div");
+    let svg = selection
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    panelb(svg, config);
+
+    const svgFilename = "figure1b.svg";
+    document.getElementById("downloadButton").addEventListener("click", () => {
+      downloadSVG(svg, svgFilename);
+    });
+  </script>
+</html>
