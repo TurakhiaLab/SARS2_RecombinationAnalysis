@@ -11,6 +11,9 @@ async function histogram(svg, config) {
   const SCATTER_RADIUS = 5.0;
   const SHIFT_POINTS_RIGHT = width / 2;
   const BAR_PADDING = 2;
+  const binWidth = config["histConfig"].binWidth;
+  const domainStart = config["histConfig"].domainStart;
+  const domainEnd = config["histConfig"].domainEnd;
 
   // Get input recomb data and statistics data
   const statsData = await d3.csv(config["statsFilename"]);
@@ -29,11 +32,8 @@ async function histogram(svg, config) {
       Percentile99: parseFloat(d.Percentile99),
     };
   });
-  const binWidth = config["histConfig"].binWidth;
-  const domainStart = config["histConfig"].domainStart;
-  const domainEnd = config["histConfig"].domainEnd;
 
-  let x = d3
+  const x = d3
     .scaleLinear()
     .domain([domainStart, domainEnd])
     .range([0, SCATTER_WIDTH]);
@@ -51,8 +51,9 @@ async function histogram(svg, config) {
   let bins = histogram(data);
   const [minCount, maxCount] = d3.extent(bins.map((d) => d.length));
 
+  // y-axis max value buffer
   const OCC_BUFFER = 10;
-  let y = d3
+  const y = d3
     .scaleLinear()
     .domain([0, maxCount + OCC_BUFFER])
     .range([height, SCATTER_HEIGHT]);
@@ -60,7 +61,7 @@ async function histogram(svg, config) {
   const xAxis = d3.axisBottom(x).ticks(20).tickSizeOuter(0);
   const yAxis = d3.axisLeft(y).tickSizeOuter(0);
 
-  // histogram
+  // main histogram
   svg
     .selectAll(".bar")
     .data(bins)

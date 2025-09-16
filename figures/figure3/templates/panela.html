@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Figure 3a</title>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+    <button id="downloadButton" type="submit" value="Submit">
+      Download SVG
+    </button>
+
+    <div id="snv-fitness-hist"></div>
+    <script type="module">
+      import { downloadSVG } from "./static/util.js";
+      import { histogram } from "./static/histogram.js";
+
+      const config = {
+        div: "#snv-fitness-hist",
+        // Data files
+        filename: "static/data/snp_histogram.csv",
+
+        // Define data file columns
+        Score: "PyRoScore",
+
+        // Plot dimensions
+        margin: {
+          top: 100,
+          right: 200,
+          bottom: 150,
+          left: 150,
+        },
+        width: 2000,
+        height: 1300,
+        axisTickLabelSize: "15",
+      };
+
+      let svg = d3
+        .select(config["div"])
+        .append("svg")
+        .attr("width", config["width"])
+        .attr("height", config["height"])
+        .append("g")
+        .attr(
+          "transform",
+          "translate(" +
+            config["margin"].left +
+            "," +
+            config["margin"].top +
+            ")",
+        );
+
+      histogram(svg, config);
+
+      const svgFilename = "figure3a.svg";
+      document
+        .getElementById("downloadButton")
+        .addEventListener("click", () => {
+          downloadSVG(svg, svgFilename);
+        });
+    </script>
+  </body>
+</html>

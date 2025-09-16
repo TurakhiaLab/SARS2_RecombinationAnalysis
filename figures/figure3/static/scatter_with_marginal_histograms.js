@@ -3,7 +3,34 @@ import {
   getMonthsCollection,
   minMaxValueFromColumn,
   roundTo,
-} from "../../common/util.js";
+  roundUpTo,
+} from "./util.js";
+
+function getScore(config, d) {
+  if (!config["NormalizeByMinParents"]) {
+    return d[config["Score"]];
+  } else {
+    const rawRecombScore = d[config["RawScore"]];
+    const donorScore = d[config["DonorScore"]];
+    const acceptorScore = d[config["AcceptorScore"]];
+    const minParentalFitness = Math.min(donorScore, acceptorScore);
+    const recombNormByMin = rawRecombScore / minParentalFitness;
+    return recombNormByMin;
+  }
+}
+
+function getXDomain(config, data) {
+  if (config["NormalizeByMinParents"]) {
+    return [0, 6.8 + 1];
+  } else {
+    const [minScore, maxScore] = minMaxValueFromColumn(
+      data,
+      config["Score"],
+      parseFloat,
+    );
+    return [minScore, maxScore];
+  }
+}
 
 async function scatter_with_marginal_histograms(svg, config) {
   // Constants
@@ -53,24 +80,20 @@ async function scatter_with_marginal_histograms(svg, config) {
     "DiversityScore",
     parseFloat,
   );
+
   const [minParentHD, maxParentHD] = minMaxValueFromColumn(
     recombData,
     "ParentsHD",
     parseFloat,
   );
-  const [minScore, maxScore] = minMaxValueFromColumn(
-    recombData,
-    config["Score"],
-    parseFloat,
-  );
+
+  const [minScore, maxScore] = getXDomain(config, recombData);
+  const xDomainEnd = roundUpTo(maxScore, 1);
 
   // Define scales
-  let x = d3
-    .scaleLinear()
-    .domain([0, maxScore + 0.1])
-    .range([0, SCATTER_WIDTH]);
+  const x = d3.scaleLinear().domain([0, xDomainEnd]).range([0, SCATTER_WIDTH]);
 
-  let y = d3
+  const y = d3
     .scaleLinear()
     .domain([0.0, maxParentHD + 1.0])
     .range([height, SCATTER_HEIGHT]);
@@ -99,18 +122,18 @@ async function scatter_with_marginal_histograms(svg, config) {
   let yHistogramBins = yHistogram(recombData);
   const [minYCount, maxYCount] = d3.extent(yHistogramBins.map((d) => d.length));
 
-  let xRight = d3
+  const xRight = d3
     .scaleLinear()
     .domain([yHistDomainStart, yHistDomainEnd])
     .range([height, SCATTER_HEIGHT]);
 
   const OCCURENCE_BUFFER = 10;
-  let yRightTop = d3
+  const yRightTop = d3
     .scaleLinear()
     .domain([0, maxYCount + OCCURENCE_BUFFER])
     .range([SCATTER_WIDTH, width]);
 
-  let yRight = d3
+  const yRight = d3
     .scaleLinear()
     .domain([yHistDomainStart, yHistDomainEnd])
     .range([SCATTER_HEIGHT, height]);
@@ -140,21 +163,21 @@ async function scatter_with_marginal_histograms(svg, config) {
     .attr("stroke-width", 0.5)
     .attr("stroke", "black");
 
-  let x_top = d3
+  const x_top = d3
     .scaleLinear()
-    .domain([0, maxScore + 0.1])
+    .domain([0, xDomainEnd])
     .range([0, SCATTER_WIDTH]);
 
-  const binWidth = 0.05;
-  const domainStart = 0.0;
-  const domainEnd = 1.8;
+  const binWidth = config["fitnessHistConfig"].binWidth;
+  const domainStart = config["fitnessHistConfig"].domainStart;
+  const domainEnd = xDomainEnd;
   const thresholds = d3
     .range(domainStart + binWidth, domainEnd + binWidth, binWidth)
     .map((val) => roundTo(val, 2));
 
   let histogram = d3
     .bin()
-    .value((d) => d[config["Score"]])
+    .value((d) => getScore(config, d))
     .domain([domainStart, domainEnd])
     .thresholds(thresholds);
 
@@ -226,32 +249,6 @@ async function scatter_with_marginal_histograms(svg, config) {
   // Remove month labels from the top x-axis
   svg.selectAll("text").remove();
 
-  // Add frequency count to the top of each bar, default false
-  if (config["showBarQuantity"]) {
-    /*
-    svg
-      .selectAll("text")
-      .data(NORM_FITNESS_BINS)
-      .enter()
-      .append("text")
-      .text(function (d) {
-        let count = d.value;
-        if (count != 0) {
-          return count;
-        } else {
-          return "";
-        }
-      })
-      .attr("x", function (d) {
-        return x_top(d.key) - (x_top.bandwidth() / 2 - 45);
-      })
-      .attr("y", function (d) {
-        const count = d.value;
-        return yLeftTop(count) - 5;
-      });
-      */
-  }
-
   // Add y-axis for top (x-axis) histogram
   svg
     .append("g")
@@ -277,33 +274,6 @@ async function scatter_with_marginal_histograms(svg, config) {
     .style("fill", "black")
     .text("");
 
-  // y-axis for main y-axis histogram (right side histogram)
-  /*
-  svg
-    .append("g")
-    .attr("class", "topAxis")
-    .data(HD_BINS_KEYS)
-    .style("font-size", config["axisTickLabelSize"])
-    .attr("transform", "translate(0," + SCATTER_HEIGHT + ")")
-    .call(yRightTopAxis)
-    .selectAll("text")
-    .style("text-anchor", "end")
-    .attr("dx", "-.9em")
-    .attr("dy", "1.2em")
-    .style("fill", "black")
-    .attr("transform", "rotate(90)");
-  svg
-    .append("text")
-    .attr("class", "x label")
-    .attr("text-anchor", "center")
-    .attr("x", width - 180)
-    .attr("y", SCATTER_HEIGHT - 60)
-    .attr("dx", ".75em")
-    .style("font-size", "25px")
-    .style("fill", "black")
-    .text("");
-    */
-
   // Main scatter plot x-axis
   svg
     .append("g")
@@ -316,6 +286,7 @@ async function scatter_with_marginal_histograms(svg, config) {
     .attr("dx", "-.8em")
     .attr("dy", ".15em")
     .attr("transform", "rotate(-65)");
+
   // x-axis title, specified from config
   svg
     .append("text")
@@ -341,6 +312,7 @@ async function scatter_with_marginal_histograms(svg, config) {
     .attr("dominant-baseline", "central")
     .style("fill", "black")
     .style("font-size", "20px");
+
   // y-axis title, specified from config
   svg
     .append("text")
@@ -354,6 +326,8 @@ async function scatter_with_marginal_histograms(svg, config) {
     .style("fill", "black")
     .text(config["yAxisTitle"]);
 
+  let maxVal = 0;
+
   // Create main scatter plot
   svg
     .append("g")
@@ -362,6 +336,21 @@ async function scatter_with_marginal_histograms(svg, config) {
     .enter()
     .append("circle")
     .attr("cx", function (d) {
+      if (config["NormalizeByMinParents"]) {
+        const rawRecombScore = d[config["RawScore"]];
+        const donorScore = d[config["DonorScore"]];
+        const acceptorScore = d[config["AcceptorScore"]];
+        const minParentalFitness = Math.min(donorScore, acceptorScore);
+        if (minParentalFitness <= 0) {
+          console.log("Min parental fitness: ", minParentalFitness);
+        }
+        const recombNormByMin = rawRecombScore / minParentalFitness;
+        if (recombNormByMin > maxVal) {
+          maxVal = recombNormByMin;
+        }
+        return x(recombNormByMin);
+      }
+
       return x(d[config["Score"]]);
     })
     .attr("cy", function (d) {

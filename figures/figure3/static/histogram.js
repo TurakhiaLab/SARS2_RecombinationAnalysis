@@ -1,8 +1,4 @@
-import {
-  getMonthsCollection,
-  minMaxValueFromColumn,
-  roundTo,
-} from "../../common/util.js";
+import { getMonthsCollection, minMaxValueFromColumn, roundTo } from "./util.js";
 
 function aggregate_scores(data) {
   let snv_fitness_scores = [];
