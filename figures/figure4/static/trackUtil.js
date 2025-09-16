@@ -1,4 +1,4 @@
-import { csvToArray, sum } from "../../common/util.js";
+import { csvToArray, sum } from "./util.js";
 
 const TRACK_BUFFER = 100;
 // Plot coloring
@@ -20,7 +20,6 @@ const TrackComponentType = {
   FITNESS_BAR: 1,
 };
 
-// TODO: move to util
 function extractSNVChar(aString) {
   if (!aString) {
     return;
@@ -228,6 +227,11 @@ function getBaseColorMultipleBP(pos, trackConfig, trackType, informativeSites) {
 
 // TODO: Refactor with getBarColor above, combine functions
 function getBaseColor(pos, trackConfig, trackType, informativeSites) {
+  const donorHardCodedSites = [7124, 8986, 9053, 19220, 22917];
+  if (trackType === "donor" && donorHardCodedSites.includes(pos)) {
+    return DONOR_COLOR;
+  }
+
   const numBreakpoints = trackConfig["NUM_BREAKPOINTS"];
   if (numBreakpoints == Breakpoints.SINGLE) {
     return getBaseColorSingleBP(pos, trackConfig, trackType, informativeSites);

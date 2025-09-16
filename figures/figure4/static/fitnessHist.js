@@ -1,4 +1,4 @@
-import { sum } from "../../common/util.js";
+import { sum } from "./util.js";
 
 import {
   extractPos,
@@ -63,9 +63,6 @@ function fitnessHist(svg, data, fitnessContext, trackConfig) {
 
   const MAX = d3.max(scores);
   const MIN = d3.min(scores);
-  // const STD_DEV = d3.deviation(scores);
-  // console.log('MAX SCORE: ', MAX);
-  // console.log('MIN SCORE: ', MIN);
 
   const FIXED_Y_MAX = 0.16;
   const FIXED_Y_MIN = -0.16;

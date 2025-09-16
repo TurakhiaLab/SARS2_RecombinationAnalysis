@@ -1,4 +1,4 @@
-import { csvToArray, replaceNaNwithZero, union } from "../../common/util.js";
+import { csvToArray, replaceNaNwithZero, union } from "./util.js";
 import { fitnessHist } from "./fitnessHist.js";
 import {
   addMutationLabels,
@@ -202,5 +202,6 @@ async function track(svg, donorDataFile, acceptorDataFile, config) {
   };
 
   addPositionLabels(svg, positionsAxisContext);
+  return svg;
 }
 export { track };

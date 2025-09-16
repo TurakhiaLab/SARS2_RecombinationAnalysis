@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Figure 4b</title>
+    <meta charset="utf-8" />
+  </head>
+
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <button id="downloadButton" type="submit" value="Submit">
+      Download SVG
+    </button>
+    <div id="track"></div>
+    <script type="module">
+      import { track } from "./static/track.js";
+      import { downloadSVG } from "./static/util.js";
+
+      // Input data
+      const acceptorData = "static/data/node_1736828.tsv";
+      const donorData = "static/data/node_1475104.tsv";
+      const informativeSitesData =
+        "static/data/node_1487489_informative_sites.tsv";
+      const trackDivID = "#track";
+      const config = {
+        NUM_BREAKPOINTS: 1,
+        BREAKPOINT1_START: 8991,
+        BREAKPOINT1_END: 8991,
+        BREAKPOINT2_START: 29903,
+        BREAKPOINT2_END: 29903,
+        INFORMATIVE_SITES: informativeSitesData,
+        BORDER_HEIGHT: 2000,
+        OUTER_BUFFER: 50,
+        margin: { top: 100, right: 100, bottom: 100, left: 100 },
+        width: 3500,
+        height: 2000 - 50,
+      };
+      const width = config["width"];
+      const height = config["height"];
+      const margin = config["margin"];
+
+      let selection = d3.select(trackDivID).append("div");
+      let svg = selection
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      track(svg, donorData, acceptorData, config);
+
+      // Download button for plot svg
+      const svgFilename = "figure4b.svg";
+      document
+        .getElementById("downloadButton")
+        .addEventListener("click", () => {
+          downloadSVG(svg, svgFilename);
+        });
+    </script>
+  </body>
+</html>
