@@ -1,13 +1,5 @@
 # recomb-experiments
 
-## Setup
-
-Conda Env
-```
-conda env create -f install/env.yml
-conda activate recomb-experiments
-```
-
 # Run RIVET for recombination inference
 
 ### Download a MAT and MAT metadata file
@@ -59,10 +51,40 @@ python3 rivet-backend.py
 ./scripts/run_chronumental.sh $MAT $METADATA
 ```
 
+# Infection Counts
 
-# Notebooks
+```
+wget https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv
+```
 
-Launch Jupyter notebooks, and open the `Recombination-Analysis` in `notebooks` directory.
+
+# Standing Genetic Diversity
+TODO: Add command to calculate the standing genetic diversity metric.
+
+
+
+# Fitness
+
+### Download PyR0 model mutation fitness data
+The `mutations.tsv` file contains the individual amino acid mutations fitness scores from the PyR0 model, ranked by statistical significance.
+
+Download this file into the `data` directory.
 ```
-jupyter notebook
+wget https://raw.githubusercontent.com/broadinstitute/pyro-cov/7d2829dc9c209399ecc188f2c87a881bdb09b221/paper/mutations.tsv data/
 ```
+
+
+# Analysis Notebook
+
+Install `pixi` if not already installed on your system with the following command:
+NOTE: This command will work for Linux & macOS installation only, please see the `pixi` installation page for windows: [install pixi](https://pixi.sh/latest/installation/).
+```
+curl -fsSL https://pixi.sh/install.sh | sh
+```
+
+Then run the following two commands to launch the `notebooks/analysis.ipynb` notebook.
+```
+pixi shell
+pixi run jupyter lab notebooks/analysis.ipyn
+```
+

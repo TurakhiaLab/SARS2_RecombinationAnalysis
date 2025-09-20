@@ -1,3 +1,7 @@
 notebooks/.ipynb_checkpoints/
 .vscode/
 .DS_Store
+__pycache__
+# pixi environments
+.pixi/*
+!.pixi/config.toml

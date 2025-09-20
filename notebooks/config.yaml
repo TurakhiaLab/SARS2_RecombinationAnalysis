@@ -1,0 +1,11 @@
+# Configuation file for recombinant analysis notebook
+DATA_DIR: "../data"
+MAT_DATE: "2023-12-25"
+
+# Just the names of the files, the full path to the files in "DATA_DIR" above will be handled automatically
+RIVET_RESULTS_FILE: "final_recombinants_2023-12-25.txt"
+RIVET_VCF_FILE: "trios_2023-12-25.vcf"
+CHRONUMENTAL_FILE: "chronumental_dates_gisaidAndPublic.2023-12-25-STEPS2000-SERIAL3.metadata.tsv.tsv"
+PYRO_MUTATIONS_FILE: "mutations.tsv"
+CASES_FILE: "time_series_covid19_confirmed_global.csv"
+GENETIC_DIVERSITY_FILE: "genetic-diversity-gisaidAndPublic.2023-12-25.csv"
