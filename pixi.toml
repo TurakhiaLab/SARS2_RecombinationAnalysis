@@ -6,7 +6,7 @@ platforms = ["osx-arm64"]
 version = "0.1.0"
 
 [tasks]
-all = "python run.py"
+data = "python run.py"
 
 
 [dependencies]
