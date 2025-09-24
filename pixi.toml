@@ -6,6 +6,8 @@ platforms = ["osx-arm64"]
 version = "0.1.0"
 
 [tasks]
+all = "python run.py"
+
 
 [dependencies]
 polars = ">=1.33.1,<2"

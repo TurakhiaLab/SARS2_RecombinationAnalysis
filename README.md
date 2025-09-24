@@ -45,16 +45,13 @@ Then launch the `rivet` job.
 python3 rivet-backend.py
 ```
 
+When `RIVET` is finished running, copy the results file (`final_recombinants.txt"`) and the trios VCF (`trios.vcf`) into the `data` directory.
 
-### Run Chronumental
-```
-./scripts/run_chronumental.sh $MAT $METADATA
-```
 
 # Infection Counts
-
+Download the JHU daily cumulative global SARS-CoV-2 case count data into the `data` directory.
 ```
-wget https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv
+wget https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv data/
 ```
 
 
@@ -62,22 +59,22 @@ wget https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master
 TODO: Add command to calculate the standing genetic diversity metric.
 
 
-
 # Fitness
 
 ### Download PyR0 model mutation fitness data
 The `mutations.tsv` file contains the individual amino acid mutations fitness scores from the PyR0 model, ranked by statistical significance.
 
-Download this file into the `data` directory.
+Download the `mutations.tsv` file from PyR0, which contains the individual amino acid mutations fitness scores from the PyR0 model, ranked by statistical significance, into the `data` directory.
 ```
 wget https://raw.githubusercontent.com/broadinstitute/pyro-cov/7d2829dc9c209399ecc188f2c87a881bdb09b221/paper/mutations.tsv data/
 ```
 
-
 # Analysis Notebook
 
-Install `pixi` if not already installed on your system with the following command:
+Install `pixi` if not already installed on your system with the following command.
+
 NOTE: This command will work for Linux & macOS installation only, please see the `pixi` installation page for windows: [install pixi](https://pixi.sh/latest/installation/).
+
 ```
 curl -fsSL https://pixi.sh/install.sh | sh
 ```

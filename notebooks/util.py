@@ -11,6 +11,8 @@ import pandas as pd
 import yaml
 import time
 import pyarrow
+import urllib.request
+import subprocess
 
 
 RIVET_CONFIG = {
@@ -18,6 +20,12 @@ RIVET_CONFIG = {
     "QC_FLAG_COL": "Quality Control (QC) Flags",
     "PASS_FLAG": "PASS",
     "INDEL_FLAG": "Too_many_mutations_near_INDELs",
+}
+
+# JHU Case count and PyR0 mutation fitness data urls
+URLS = {
+    "cases": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",
+    "fitness": "https://raw.githubusercontent.com/broadinstitute/pyro-cov/7d2829dc9c209399ecc188f2c87a881bdb09b221/paper/mutations.tsv",
 }
 
 
@@ -48,6 +56,203 @@ def get_months():
 MONTHS = get_months()
 
 
+def download(url, local_filepath):
+    """
+    Download the file from url and save as the given local filepath name.
+
+    Parameters
+    ----------
+    url: str
+        The url to the file to download.
+
+    local_filepath: str
+        The name of the path to store the downloaded file at locally.
+    """
+    try:
+        filepath, headers = urllib.request.urlretrieve(url, local_filepath)
+        print(f"File downloaded successfully to: {filepath}")
+
+    except urllib.error.URLError as e:
+        print(f"Error downloading file: {e.reason}")
+        exit(1)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        exit(1)
+
+
+def download_data_files(data_dir, override=False):
+    """
+    Download all the necessary data files for the analysis.
+
+    Parameters
+    ----------
+    data_dir: str
+        The local directory to download the data files into.
+
+    override: bool (Optional)
+        Whether or not to override the data file if it already exists locally.
+    """
+    FILES = {
+        "cases": "time_series_covid19_confirmed_global.csv",
+        "fitness": "mutations.tsv",
+    }
+    for k, name in FILES.items():
+        path = "{}/{}".format(data_dir, name)
+        if not override and not os.path.exists(path):
+            download(URLS[k], path)
+
+
+def subprocess_runner(command):
+    """
+    Run the given string command as a subprocess.
+
+    Parameters
+    ----------
+    command: List[str]
+        The full command to run, including args.
+
+    Returns
+    ----------
+    Dict
+        The result of running the command as a subprocess.
+    """
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+        if result.stderr:
+            print("result.stderr: ", result.stderr)
+            exit(1)
+        return result
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        exit(1)
+
+
+def matUtils_extract_newick(mat, data_dir):
+    """
+    Run a matUtils extract command to extract the MAT as a Newick Tree file (.nwk).
+
+    Parameters
+    ----------
+    mat: str
+        The path to the MAT (.pb) file.
+
+    data_dir: str
+        The path to the data directory.
+
+    Returns
+    ----------
+    str
+        The path to the extracted Newick Tree file.
+    """
+    root, extension = os.path.splitext(mat)
+    newick_tree_path = "{}/{}".format(data_dir, root + ".nwk")
+    cmd = [
+        "matUtils",
+        "extract",
+        "-i",
+        "{}".format(mat),
+        "-t",
+        "{}".format(newick_tree_path),
+        "-d",
+        "{}".format(data_dir),
+    ]
+    result = subprocess_runner(cmd)
+    return newick_tree_path
+
+
+def check_files_exist(file_list):
+    """
+    Check that all the files in the given list exist.
+
+    Parameters
+    ----------
+    file_list: List[str]
+        The list of filenames to check if they actually exist.
+
+    Returns
+    ----------
+    bool
+        Returns True all the files in the list exist, otherwise False.
+    """
+    for path in file_list:
+        if not os.path.exists(path):
+            print("File not found: ", path)
+            return False
+    return True
+
+
+def run_rivet():
+    """
+    TODO:
+    """
+    print("running rivet")
+
+
+def run_diversity():
+    """
+    TODO:
+    """
+    print("running rivetUtils diversity program")
+
+
+def run_fitness():
+    """
+    TODO:
+    """
+    print("running rivetUtils fitness program")
+
+
+def run_chronumental(mat, metadata, data_dir):
+    """
+    Runs the Chronumental command that infers emergence dates for all samples/nodes in the MAT.
+
+    Parameters
+    ----------
+    mat: str
+        The name of the MAT (.pb) file.
+
+    metadata: str
+        The name of the metadata (.tsv) file that accompanies the MAT.
+
+    data_dir: str
+        The path to the data directory.
+
+    """
+    # Get file paths required for Chronumental
+    root, extension = os.path.splitext(mat)
+    chron_output = os.path.join(data_dir, "chronumental_dates_{}.tsv".format(root))
+
+    # Extract a Newick Tree file from the MAT first
+    newick_tree_path = matUtils_extract_newick(mat, data_dir)
+    metadata_path = os.path.join(data_dir, metadata)
+    # Check that all file paths exist
+    if not check_files_exist([newick_tree_path, metadata_path]):
+        exit(1)
+
+    # Chronumental settings
+    REFERENCE_NODE = "CHN/Wuhan_IME-WH01/2019|MT291826.1|2019-12-30"
+    STEPS = 2000
+
+    # Chronumental takes Newick tree file and metadata file as inputs
+    chron_cmd = [
+        "chronumental",
+        "--tree",
+        "{}".format(newick_tree_path),
+        "--dates",
+        "{}".format(metadata_path),
+        "--reference_node",
+        "{}".format(REFERENCE_NODE),
+        "--steps",
+        "{}".format(STEPS),
+        "--only_use_full_dates",
+        "--use_gpu",
+        "--dates_out",
+        "{}".format(chron_output),
+    ]
+    result = subprocess_runner(chron_cmd)
+
+
 def load_config(config_filename):
     """
     Load YAML configuration file containing dataset file names and other analysis/notebook configuration parameters.
@@ -64,6 +269,18 @@ def load_config(config_filename):
     """
     with open(config_filename, "r") as file:
         data = yaml.safe_load(file)
+    # Get project top level directory absolute path
+    top_dir = os.path.dirname(os.path.abspath(config_filename))
+    data_dir = data["DATA_DIR"]
+    # Get absolute path to data directory
+    data_dir_path = os.path.join(top_dir, data_dir)
+    if not os.path.isdir(data_dir_path):
+        raise FileNotFoundError(
+            f"The data directory '{data_dir}' not found in project root."
+        )
+
+    # Replace data directory name with its absolute path
+    data["DATA_DIR"] = data_dir_path
     return data
 
 

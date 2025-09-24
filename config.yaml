@@ -1,7 +1,20 @@
 # Configuation file for recombinant analysis notebook
-DATA_DIR: "../data"
+
+# Name of the directory to put data and results in
+DATA_DIR: "data"
 MAT_DATE: "2023-12-25"
 
+# Name of the MAT and metadata file used in this analysis   
+MAT: gisaidAndPublic.2023-12-25.masked.nextclade.pangolin.pb
+METADATA: gisaidAndPublic.2023-12-25.metadata.tsv
+
+# Decide which steps to rerun
+RERUN_RIVET: False
+RERUN_CHRONUMENTAL: False
+RERUN_GENETIC_DIVERSITY: False
+RERUN_FITNESS: False
+
+# Results files used in analysis notebooks
 # Just the names of the files, the full path to the files in "DATA_DIR" above will be handled automatically
 RIVET_RESULTS_FILE: "final_recombinants_2023-12-25.txt"
 RIVET_VCF_FILE: "trios_2023-12-25.vcf"

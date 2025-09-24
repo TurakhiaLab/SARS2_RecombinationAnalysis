@@ -3,6 +3,7 @@ Main classes and methods used in the recombinant analysis in 'analysis.ipynb' no
 """
 
 from util import *
+import sys
 
 
 class Config:
@@ -23,8 +24,7 @@ class Config:
     def __check_files_exist(self):
         for name, value in self.__dict__.items():
             if not os.path.exists(value):
-                print("File not found: {}", value)
-                exit(1)
+                raise FileNotFoundError(f"The file '{value}' does not exist.")
 
 
 class RecombAnalysis:
@@ -60,5 +60,3 @@ class RecombAnalysis:
 
     def correlation_matrix(self):
         return self.df.to_pandas().corr()
-
-
