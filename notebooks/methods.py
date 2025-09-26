@@ -19,6 +19,7 @@ class Config:
         )
         self.RECOMBINATION_STATS_FILE = os.path.join(data_dir, config["RECOMBINATION_STATS_FILE"])
         self.MONTHLY_FITNESS_STATS_FILE = os.path.join(data_dir, config["MONTHLY_FITNESS_STATS"])
+        self.SUBTITUTION_SCORES = os.path.join(data_dir, config["SUBTITUTION_SCORES"])
         self.__check_files_exist()
         self.MAT_DATE = os.path.join(data_dir, config["MAT_DATE"])
         self.DATA_DIR = data_dir
@@ -34,6 +35,8 @@ class RecombAnalysis:
         self.config = config
         print("Loading all datasets for analysis")
         start_time = time.perf_counter()
+
+        self.substitution_stats = get_substitution_stats(config.SUBTITUTION_SCORES)
 
         self.monthly_fitness_stats = get_monthly_fitness_stats(config.MONTHLY_FITNESS_STATS_FILE)
 
@@ -75,6 +78,10 @@ class RecombAnalysis:
         """
         return self.norm_fitness
 
+    def getSubstitutionStats(self):
+        """
+        """
+        return self.substitution_stats
 
     def getMonthlyStats(self):
         """

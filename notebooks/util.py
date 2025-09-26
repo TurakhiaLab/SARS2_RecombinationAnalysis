@@ -13,6 +13,7 @@ import time
 import pyarrow
 import urllib.request
 import subprocess
+import statistics
 
 
 RIVET_CONFIG = {
@@ -651,6 +652,20 @@ def num_recombs_per_month(final_recomb_nodes, sample_months, merged_df):
     return merged_df
 
 
+def get_substitution_stats(filename):
+    """
+    TODO
+    """
+    df = pl.read_csv(filename)
+    scores = []
+    for row in df.iter_rows(named=True):
+        occ = row["Occurrence"]
+        score = row["PyRoScore"]
+        for i in range(0, occ):
+            scores.append(score)
+        scores.append(score)
+    return {"mean": statistics.mean(scores), "stddev": statistics.stdev(scores)}
+
 def get_monthly_fitness_stats(stats_filename):
     """
     TODO:
@@ -659,7 +674,7 @@ def get_monthly_fitness_stats(stats_filename):
     return df
 
 
-def calc_norm_fitness(recomb_data_df, csv_outfile = None):
+def calc_norm_fitness(recomb_data_df, csv_outfile=None):
     """
     TODO:
     """
@@ -669,7 +684,7 @@ def calc_norm_fitness(recomb_data_df, csv_outfile = None):
         TODO:
         """
         if max_x == min_x:
-            '''
+            """
             #print("max_x: ", max_x)
             #print("min_x: ", min_x)
             #print("score: ", score)
@@ -677,7 +692,7 @@ def calc_norm_fitness(recomb_data_df, csv_outfile = None):
                 print("recomb greater than both")
             else:
                 print("recomb less than both")
-            '''
+            """
             # In cases where the max(parents) = min(parents)
             return 0.5
         norm = (score - min_x) / (max_x - min_x)
@@ -709,16 +724,15 @@ def calc_norm_fitness(recomb_data_df, csv_outfile = None):
             ),
             in_place=True,
         )
-    #print("count: ", count)
-    assert(len(df) == len(recomb_data_df))
+    # print("count: ", count)
+    assert len(df) == len(recomb_data_df)
     if csv_outfile is not None:
         df.write_csv(csv_outfile)
     return df
 
 
 def get_recombinant_data(recombination_data_filename):
-    """TODO
-    """
+    """TODO"""
     df = pl.read_csv(recombination_data_filename)
     return df
 
