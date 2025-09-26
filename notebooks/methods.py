@@ -78,10 +78,20 @@ class RecombAnalysis:
         """
         return self.norm_fitness
 
-    def getSubstitutionStats(self):
+    def getSubstitutionFitnessStats(self):
         """
         """
         return self.substitution_stats
+
+    def getRecombinationFitnessStats(self):
+        """
+        """
+        return get_recombination_fitness_stats(self.recomb_data)
+
+    def getRecombinationMinFitnessStats(self):
+        """
+        """
+        return get_recombination_min_fitness_stats(self.recomb_data)
 
     def getMonthlyStats(self):
         """

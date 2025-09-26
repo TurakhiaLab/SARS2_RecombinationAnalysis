@@ -652,6 +652,40 @@ def num_recombs_per_month(final_recomb_nodes, sample_months, merged_df):
     return merged_df
 
 
+def get_recombination_min_fitness_stats(df):
+    """
+    TODO: docs
+    TODO: Add a column in the results file for RecombFitnessNormalizedByMinParents
+    """
+    RECOMB_SCORE_COL = "Score"
+    DONOR_SCORE_COL = "DonorFitness"
+    ACCEPTOR_SCORE_COL = "AcceptorFitness"
+    min_normalized_scores = []
+    for row in df.iter_rows(named=True):
+        recomb_score = row[RECOMB_SCORE_COL]
+        donor_score = row[DONOR_SCORE_COL]
+        acceptor_score = row[ACCEPTOR_SCORE_COL]
+        min_parental_score = min(donor_score, acceptor_score)
+        min_normalized_scores.append(recomb_score / min_parental_score)
+    assert len(min_normalized_scores) == len(df)
+    mean_fitness = statistics.mean(min_normalized_scores)
+    std_dev_fitness = statistics.stdev(min_normalized_scores)
+    return {"mean": mean_fitness, "stddev": std_dev_fitness}
+
+
+def get_recombination_fitness_stats(df):
+    """
+    TODO: docs
+    """
+    mean_fitness = df.select(
+        pl.col("RecombFitnessNormalizedByMaxParents").mean()
+    ).item()
+    std_dev_fitness = df.select(
+        pl.col("RecombFitnessNormalizedByMaxParents").std()
+    ).item()
+    return {"mean": mean_fitness, "stddev": std_dev_fitness}
+
+
 def get_substitution_stats(filename):
     """
     TODO
@@ -665,6 +699,7 @@ def get_substitution_stats(filename):
             scores.append(score)
         scores.append(score)
     return {"mean": statistics.mean(scores), "stddev": statistics.stdev(scores)}
+
 
 def get_monthly_fitness_stats(stats_filename):
     """
