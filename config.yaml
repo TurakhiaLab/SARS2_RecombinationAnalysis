@@ -14,12 +14,16 @@ RERUN_CHRONUMENTAL: True
 RERUN_FITNESS: True
 RERUN_RIVET: False
 RERUN_GENETIC_DIVERSITY: False
+RERUN_MONTHLY_FITNESS_STATS: False
 
 # Results files used in analysis notebooks
 # Just the names of the files, the full path to the files in "DATA_DIR" above will be handled automatically
 RIVET_RESULTS_FILE: "final_recombinants_2023-12-25.txt"
 RIVET_VCF_FILE: "trios_2023-12-25.vcf"
+
+RECOMBINATION_STATS_FILE: "rivet_recombs_data.csv"
 CHRONUMENTAL_FILE: "chronumental_dates_gisaidAndPublic.2023-12-25-STEPS2000-SERIAL3.metadata.tsv.tsv"
 PYRO_MUTATIONS_FILE: "mutations.tsv"
 CASES_FILE: "time_series_covid19_confirmed_global.csv"
 GENETIC_DIVERSITY_FILE: "genetic-diversity-gisaidAndPublic.2023-12-25.csv"
+MONTHLY_FITNESS_STATS: "monthly_fitness_stats.csv"

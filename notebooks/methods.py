@@ -17,6 +17,8 @@ class Config:
         self.GENETIC_DIVERSITY_FILE = os.path.join(
             data_dir, config["GENETIC_DIVERSITY_FILE"]
         )
+        self.RECOMBINATION_STATS_FILE = os.path.join(data_dir, config["RECOMBINATION_STATS_FILE"])
+        self.MONTHLY_FITNESS_STATS_FILE = os.path.join(data_dir, config["MONTHLY_FITNESS_STATS"])
         self.__check_files_exist()
         self.MAT_DATE = os.path.join(data_dir, config["MAT_DATE"])
         self.DATA_DIR = data_dir
@@ -32,6 +34,19 @@ class RecombAnalysis:
         self.config = config
         print("Loading all datasets for analysis")
         start_time = time.perf_counter()
+
+        self.monthly_fitness_stats = get_monthly_fitness_stats(config.MONTHLY_FITNESS_STATS_FILE)
+
+        recomb_data = get_recombinant_data(config.RECOMBINATION_STATS_FILE)
+
+        # Calculate min-max normalization of fitness for each recombinant,
+        # return DataFrame and write results to CSV file.
+        OUTFILE = os.path.join(self.config.DATA_DIR, "recomb_fitness_normalized.csv")
+        self.norm_fitness = calc_norm_fitness(recomb_data, OUTFILE)
+
+        # Merge monthly fitness stats data with individual recombinant fitness stats data
+        self.recomb_data = recomb_data.join(self.monthly_fitness_stats, on="Month")
+
         genetic_diversity_by_month = get_genetic_diversity_scores(
             config.GENETIC_DIVERSITY_FILE
         )
@@ -53,6 +68,23 @@ class RecombAnalysis:
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
         print(f"Data loaded, analysis ready. Elapsed time: {elapsed_time:.4f} seconds")
+
+
+    def getNormFitness(self):
+        """
+        """
+        return self.norm_fitness
+
+
+    def getMonthlyStats(self):
+        """
+        """
+        return self.monthly_fitness_stats
+
+    def getRecombData(self):
+        """
+        """
+        return self.recomb_data
 
     def toDataframe(self):
         """ """

@@ -421,12 +421,13 @@ def get_chronumental_dates(chronumental_filename):
     CACHE_PATH = chronumental_filename + ".pkl"
     # Check if chronumental dates object cached
     if os.path.exists(CACHE_PATH):
-        print("Loading chronumental object from disk cache: ", CACHE_PATH)
+        print("Loading Chronumental object from disk cache: ", CACHE_PATH)
         with open(CACHE_PATH, "rb") as f:
             sample_months_object = pickle.load(f)
         print("Chronumental dates loaded.")
         return sample_months_object
 
+    print("Loading Chronumental dates file. This could take a couple minutes.")
     df = load_df(chronumental_filename, delim="\t")
     SAMPLE_COL = "strain"
     DATE_COL = "predicted_date"
@@ -648,6 +649,78 @@ def num_recombs_per_month(final_recomb_nodes, sample_months, merged_df):
     )
     # print("Merged df: ", merged_df.sort("NumRecombsDetectedByMonth"))
     return merged_df
+
+
+def get_monthly_fitness_stats(stats_filename):
+    """
+    TODO:
+    """
+    df = pl.read_csv(stats_filename)
+    return df
+
+
+def calc_norm_fitness(recomb_data_df, csv_outfile = None):
+    """
+    TODO:
+    """
+
+    def min_max_norm(score, max_x, min_x):
+        """
+        TODO:
+        """
+        if max_x == min_x:
+            '''
+            #print("max_x: ", max_x)
+            #print("min_x: ", min_x)
+            #print("score: ", score)
+            if score > max_x:
+                print("recomb greater than both")
+            else:
+                print("recomb less than both")
+            '''
+            # In cases where the max(parents) = min(parents)
+            return 0.5
+        norm = (score - min_x) / (max_x - min_x)
+        return norm
+
+    count = 0
+    # RecombID,NormFitness,Date
+    df = pl.DataFrame(
+        {
+            "RecombID": pl.Series([], dtype=pl.String),
+            "NormFitness": pl.Series([], dtype=pl.Float64),
+            "Date": pl.Series([], dtype=pl.String),
+        }
+    )
+    for row in recomb_data_df.iter_rows(named=True):
+        month = row["Month"]
+        recomb_id = row["Node"]
+        recomb_fitness = row["Score"]
+        donor_fitness = row["DonorFitness"]
+        acceptor_fitness = row["AcceptorFitness"]
+        min_max_fitness = min_max_norm(
+            recomb_fitness,
+            max(donor_fitness, acceptor_fitness),
+            min(donor_fitness, acceptor_fitness),
+        )
+        df.vstack(
+            pl.DataFrame(
+                {"RecombID": recomb_id, "NormFitness": min_max_fitness, "Date": month}
+            ),
+            in_place=True,
+        )
+    #print("count: ", count)
+    assert(len(df) == len(recomb_data_df))
+    if csv_outfile is not None:
+        df.write_csv(csv_outfile)
+    return df
+
+
+def get_recombinant_data(recombination_data_filename):
+    """TODO
+    """
+    df = pl.read_csv(recombination_data_filename)
+    return df
 
 
 def get_recombinant_nodes(rivet_results_filename, sample_months):
