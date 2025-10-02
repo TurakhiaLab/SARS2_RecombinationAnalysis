@@ -1,0 +1,3 @@
+[submodule "notebooks/third_party/pyro-cov"]
+	path = notebooks/third_party/pyro-cov
+	url = https://github.com/broadinstitute/pyro-cov.git

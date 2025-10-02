@@ -5,15 +5,32 @@ name = "recomb-experiments"
 platforms = ["osx-arm64"]
 version = "0.1.0"
 
-[tasks]
-data = "python run.py"
-
-
 [dependencies]
 polars = ">=1.33.1,<2"
 ipykernel = ">=6.30.1,<7"
 jupyterlab = ">=4.4.7,<5"
-usher = { version = ">=0.6.6,<0.7", channel = "bioconda" }
-chronumental = { version = ">=0.0.65,<0.0.66", channel = "bioconda" }
-pyyaml = ">=6.0.2,<7"
+pyyaml = ">=6.0.3,<7"
 pyarrow = ">=17.0.0,<18"
+numpy = ">=2.3.3,<3"
+pandas = ">=2.3.2,<3"
+cyvcf2 = ">=0.31.1,<0.32"
+
+[feature.data-env.dependencies]
+chronumental = { version = ">=0.0.65,<0.0.66", channel = "bioconda" }
+usher = { version = ">=0.6.6,<0.7", channel = "bioconda" }
+cyvcf2 = ">=0.31.1,<0.32"
+
+[environments]
+data-env = { features = ["data-env"] }
+pyro-env = { features = ["pyro-env"] }
+
+[feature.pyro-env.dependencies]
+cyvcf2 = ">=0.31.1,<0.32"
+numpy = ">=2.3.3,<3"
+
+[feature.pyro-env.pypi-dependencies]
+pyrocov = { path = "./notebooks/third_party/pyro-cov", editable = true }
+
+[tasks]
+recomb-trios-fitness = { cmd = "pixi run --environment pyro-env python notebooks/fitness.py" }
+data = { cmd = "pixi run --environment data-env python run.py", depends-on = ["recomb-trios-fitness"]  }
