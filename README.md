@@ -1,6 +1,18 @@
 # recomb-experiments
 
-# Installation
+## Table of Contents
+- [Installation](#install)
+    - [Clone Repository](#clone)
+- [Recombination Analysis Notebook](#notebook)
+- [Generating Data for SARS-CoV-2 Recombination Analysis](#recomb_data)
+    - [UShER Mutation-Annotated Tree](#mat)
+    - [RIVET Results Files](#rivet_results)
+- [Generating Data Files](#data_files)
+- [Running RIVET to infer recombination](#rivet)
+- [References](#references)
+
+
+# <a name="install"></a> Installation
 
 This repository uses the `pixi` package manager. Install `pixi` if not already installed on your system with the following command.
 If you already have `pixi` installed on your system, please skip to the step below to activate the `pixi` shell environment.
@@ -12,7 +24,7 @@ NOTE: This command will work for Linux & macOS installation only, please see the
 curl -fsSL https://pixi.sh/install.sh | sh
 ```
 
-## Clone Repository
+## <a name="clone"></a>Clone Repository
 
 To clone this repository, type the following command: (This will take a couple of minutes)
 ```
@@ -21,7 +33,7 @@ cd recomb-experiments
 ```
 
 
-# Recombination Analysis Notebook
+# <a name="notebook"></a>Recombination Analysis Notebook
 The Jupyter notebook `notebooks/analysis.ipynb` contains the analysis and statistics reported in the manuscript.
 
 The notebook loads the following three data files, included in the `data` directory:
@@ -38,7 +50,7 @@ pixi shell
 pixi run jupyter lab notebooks/analysis.ipynb
 ```
 
-# Generating Data for SARS-CoV-2 Recombination Analysis
+# <a name="recomb_data"></a>Generating Data for SARS-CoV-2 Recombination Analysis
 The following files used in the analysis are provided in the `data` directory:
 
 - `substitutions_scores.csv`: A file containing the PyR0 fitness scores for all ranked substitutions considered by PyR0 found in the "2023-12-25" private MAT.
@@ -53,7 +65,7 @@ The following two files will be automatically downloaded or generated and placed
 - `mutations.tsv`: Contains the individual amino acid mutation fitness scores from the PyR0 model, ranked by statistical significance.
 - `chronumental_dates_gisaidAndPublic.2023-12-25-STEPS2000-SERIAL3.metadata.tsv.tsv`: The Chronumental-inferred emergence dates for all samples in the MAT.
 
-### UShER Mutation-Annotated Tree
+### <a name="mat"></a>UShER Mutation-Annotated Tree
 
 A private MAT (dated "2023-12-25") containing GISAID sequences with privileged access was used for the analysis in this manuscript. Please feel free to email us if you need access to this MAT and its metadata file. The full analysis is also completely compatible with the publicly available MATs that can be downloaded from: [https://hgdownload.soe.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/](https://hgdownload.soe.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/). 
 To reproduce this analysis with any MAT, replace relevant fields (shown below) in the `config.yaml` file with the correct name and date of the MAT and metadata files used. Make sure these files are copied into the `data` directory.
@@ -66,7 +78,7 @@ MAT: gisaidAndPublic.2023-12-25.masked.nextclade.pangolin.pb
 METADATA: gisaidAndPublic.2023-12-25.metadata.tsv
 ```
 
-### RIVET Results Files
+### <a name="rivet_results"></a>RIVET Results Files
 
 If you have already run `RIVET` separately, copy the following two `RIVET` output files into the `data` directory. Otherwise, first run `RIVET` separately, and then copy these two output files into the `data` directory before proceeding to the next steps. For instructions on running `RIVET`, please see the section below titled: [Running RIVET to infer recombination](#Running-RIVET-to-infer-recombination).
 
@@ -78,7 +90,7 @@ cp final_recombinants_2023-12-25.txt data/
 cp trios_2023-12-25.vcf data/
 ```
 
-# Generating data files
+# <a name="data_gen"></a>Generating Data Files
 Follow these steps to generate all the data files used in the recombination analysis notebook, primarily `rivet_recombs_data.csv`.
 
 **NOTE:** The standing genetic diversity results could take several days to complete for a MAT with millions of sequences.
@@ -105,11 +117,11 @@ Run the following command to generate the data used in this analysis:
 pixi run data
 ```
 
-# Running RIVET to infer recombination
+# <a name="rivet"></a> Running RIVET to infer recombination
 TODO: Add instructions for running RIVET separately.
 
 
-# References
+# <a name="references"></a>References
 This work was only made possible by the important contributions of the following methods and datasets. In addition to this manuscript, please consider citing the following papers if you found this analysis useful for your research.
 
 - PyR0 Model
