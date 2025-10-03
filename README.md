@@ -7,7 +7,7 @@
 - [Generating Data for SARS-CoV-2 Recombination Analysis](#recomb_data)
     - [UShER Mutation-Annotated Tree](#mat)
     - [RIVET Results Files](#rivet_results)
-- [Generating Data Files](#data_gen)
+    - [Generating Data Files](#data_gen)
 - [Running RIVET to infer recombination](#rivet)
 - [References](#references)
 
@@ -80,7 +80,7 @@ METADATA: gisaidAndPublic.2023-12-25.metadata.tsv
 
 ### <a name="rivet_results"></a>RIVET Results Files
 
-If you have already run `RIVET` separately, copy the following two `RIVET` output files into the `data` directory. Otherwise, first run `RIVET` separately, and then copy these two output files into the `data` directory before proceeding to the next steps. For instructions on running `RIVET`, please see the section below titled: [Running RIVET to infer recombination](#Running-RIVET-to-infer-recombination).
+If you have already run `RIVET` separately, copy the following two `RIVET` output files into the `data` directory. Otherwise, first run `RIVET` separately, and then copy these two output files into the `data` directory before proceeding to the next steps. For instructions on running `RIVET`, please see the section below titled: [Running RIVET to infer recombination](#rivet).
 
 - `final_recombinants_2023-12-25.txt`: The `RIVET` inferred recombination results from the "2023-12-25" private MAT.
 - `trios_2023-12-25.vcf`: The VCF file for all trio recombinant sequences inferred by `RIVET`.
@@ -90,7 +90,7 @@ cp final_recombinants_2023-12-25.txt data/
 cp trios_2023-12-25.vcf data/
 ```
 
-# <a name="data_gen"></a>Generating Data Files
+## <a name="data_gen"></a>Generating Data Files
 Follow these steps to generate all the data files used in the recombination analysis notebook, primarily `rivet_recombs_data.csv`.
 
 **NOTE:** The standing genetic diversity results could take several days to complete for a MAT with millions of sequences.
