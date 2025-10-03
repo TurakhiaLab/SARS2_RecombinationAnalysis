@@ -23,8 +23,6 @@ NOTE: This command will work for Linux & macOS installation only, please see the
 curl -fsSL https://pixi.sh/install.sh | sh
 ```
 
-## Clone Repository
-
 To clone this repository, type the following command: (This will take a couple of minutes)
 ```
 git clone --recurse-submodules https://github.com/TurakhiaLab/recomb-experiments.git
