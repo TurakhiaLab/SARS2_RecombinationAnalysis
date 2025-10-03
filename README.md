@@ -7,7 +7,7 @@
 - [Generating Data for SARS-CoV-2 Recombination Analysis](#recomb_data)
     - [UShER Mutation-Annotated Tree](#mat)
     - [RIVET Results Files](#rivet_results)
-- [Generating Data Files](#data_files)
+- [Generating Data Files](#data_gen)
 - [Running RIVET to infer recombination](#rivet)
 - [References](#references)
 
