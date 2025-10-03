@@ -81,8 +81,6 @@ cp trios_2023-12-25.vcf data/
 # Generating data files
 Follow these steps to generate all the data files used in the recombination analysis notebook, primarily `rivet_recombs_data.csv`.
 
-If you are using a different MAT than the one used in this analysis or wish to re-generate the standing genetic diversity steps, change the corresponding field to `True` in the `config.yaml` file, and rerun `pixi run data`.
-
 **NOTE:** The standing genetic diversity results could take several days to complete for a MAT with millions of sequences.
 To compute the standing genetic diversity metric for just a single month (faster), provide the month in the `RERUN_GENETIC_DIVERSITY` field below, as follows:
 ```
