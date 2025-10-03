@@ -17,7 +17,7 @@ import re
 from collections import OrderedDict, defaultdict
 from typing import Dict, List, Tuple
 
-# NOTE: Unmodified versions of original pyrocov scripts, imported
+# NOTE: Unmodified versions of original pyrocov functions, imported
 from pyrocov.sarscov2 import GENE_TO_POSITION, DNA_TO_AA
 
 

@@ -65,7 +65,6 @@ class Config:
 
     def __init__(self, config_filename):
         config = load_config(config_filename)
-        # TODO: Maybe don't make the data directory namable, include it in repo.
         # Data directory name
         data_dir = config["DATA_DIR"]
 
@@ -93,14 +92,14 @@ class Config:
         )
         # Fitness scores for all substitution mutations found in the MAT
         self.SUBTITUTION_SCORES = os.path.join(data_dir, config["SUBTITUTION_SCORES"])
-        self.__check_files_exist()
+        #self.__check_files_exist()
         self.MAT_DATE = os.path.join(data_dir, config["MAT_DATE"])
+        self.MAT = os.path.join(data_dir, config["MAT"])
+        self.METADATA = os.path.join(data_dir, config["METADATA"])
         self.DATA_DIR = data_dir
         self.RERUN_CHRONUMENTAL = config["RERUN_CHRONUMENTAL"]
         self.RERUN_GENETIC_DIVERSITY = config["RERUN_GENETIC_DIVERSITY"]
         self.RERUN_MONTHLY_FITNESS_STATS = config["RERUN_MONTHLY_FITNESS_STATS"]
-        self.RERUN_CIRCULATING_FITNESS = config["RERUN_CIRCULATING_FITNESS"]
-        self.RERUN_FITNESS = config["RERUN_FITNESS"]
 
     def __check_files_exist(self):
         for name, value in self.__dict__.items():
@@ -306,6 +305,8 @@ def check_files(config):
         config.CASES_FILE,
         config.PYRO_MUTATIONS_FILE,
         config.CHRONUMENTAL_FILE,
+        config.RIVET_RESULTS_FILE,
+        config.RIVET_VCF_FILE,
     ]
     for file in FILES:
         path = os.path.join(config.DATA_DIR, file)
@@ -424,7 +425,6 @@ def merge_datafiles(config):
     TODO
     """
     print("Merging all files from analysis")
-
     check_files(config)
 
     # Get genetic diversity scores from file
@@ -520,6 +520,16 @@ def run_chronumental(mat, metadata, data_dir):
         The path to the data directory.
 
     """
+    # Check that MAT and metadat file exist in data dir
+    if not os.path.exists(mat):
+        raise FileNotFoundError(
+            f"The MAT file '{mat}' not found in data directory. Please copy the MAT file into 'data' directory."
+        )
+    if not os.path.exists(metadata):
+        raise FileNotFoundError(
+            f"The MAT metadata file '{metadata}' not found in data directory. Please copy the metadata file into 'data' directory."
+        )
+
     # Get file paths required for Chronumental
     root, extension = os.path.splitext(mat)
     chron_output = os.path.join(data_dir, "chronumental_dates_{}.tsv".format(root))

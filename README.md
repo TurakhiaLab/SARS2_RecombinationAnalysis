@@ -11,6 +11,16 @@ NOTE: This command will work for Linux & macOS installation only, please see the
 ```
 curl -fsSL https://pixi.sh/install.sh | sh
 ```
+
+## Clone Repository
+
+To clone this repository, type the following command: (This will take a couple of minutes)
+```
+git clone --recurse-submodules https://github.com/TurakhiaLab/recomb-experiments.git
+cd recomb-experiments
+```
+
+
 # Recombination Analysis Notebook
 The Jupyter notebook `notebooks/analysis.ipynb` contains the analysis and statistics reported in the manuscript.
 
@@ -46,7 +56,7 @@ The following two files will be automatically downloaded or generated and placed
 ### UShER Mutation-Annotated Tree
 
 A private MAT (dated "2023-12-25") containing GISAID sequences with privileged access was used for the analysis in this manuscript. Please feel free to email us if you need access to this MAT and its metadata file. The full analysis is also completely compatible with the publically available MATs that can be downloaded from: [https://hgdownload.soe.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/](https://hgdownload.soe.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/). 
-To reproduce this analysis with any MAT, replace relevant fields (shown below) in the `config.yaml` file with the correct name and date of the MAT and metadata files used.
+To reproduce this analysis with any MAT, replace relevant fields (shown below) in the `config.yaml` file with the correct name and date of the MAT and metadata files used. Make sure these files are copied into the `data` directory.
 
 ```
 # Date of the MAT used for analysis
@@ -71,7 +81,7 @@ cp trios_2023-12-25.vcf data/
 # Generating data files
 Follow these steps to generate all the data files used in the recombination analysis notebook, primarily `rivet_recombs_data.csv`.
 
-the recombination inference or standing genetic diversity steps, change the corresponding field to `True` in the `config.yaml` file, and rerun `pixi run data`.
+If you are using a different MAT then the one used in this analysis or wish to re-generate the standing genetic diversity steps, change the corresponding field to `True` in the `config.yaml` file, and rerun `pixi run data`.
 
 **NOTE:** The standing genetic diversity results could take several days to complete, for a MAT with millions of sequences.
 To compute the standing genetic diversity metric for just a single month (faster), provide the month in the `RERUN_GENETIC_DIVERSITY` field below, as follows:
