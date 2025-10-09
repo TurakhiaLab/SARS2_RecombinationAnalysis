@@ -62,6 +62,7 @@ MONTHS = get_months()
 
 class Config:
     RECOMB_TRIOS_FITNESS_FILE = "rivet_trios_fitness_data.csv"
+    PANGO_RECOMBS_FILE = "pango_recombs_data.csv"
 
     def __init__(self, config_filename):
         config = load_config(config_filename)
@@ -96,6 +97,8 @@ class Config:
         self.MAT_DATE = os.path.join(data_dir, config["MAT_DATE"])
         self.MAT = os.path.join(data_dir, config["MAT"])
         self.METADATA = os.path.join(data_dir, config["METADATA"])
+        self.PANGO_RECOMBS_FILE = os.path.join(data_dir, Config.PANGO_RECOMBS_FILE)
+
         self.DATA_DIR = data_dir
         self.RERUN_CHRONUMENTAL = config["RERUN_CHRONUMENTAL"]
         self.RERUN_GENETIC_DIVERSITY = config["RERUN_GENETIC_DIVERSITY"]

@@ -87,18 +87,23 @@ Or if you want to reproduce the entire standing genetic diversity file (`genetic
 RERUN_GENETIC_DIVERSITY: True
 ```
 
-Chronumental will automatically be re-run, since the inferred emergence dates of recombinants are required for this analysis. If you are using a different MAT than the one used in this analysis or wish to re-generate these results (already included in the `data` directory for this MAT), toggle the `RERUN_GENETIC_DIVERSITY` and `RERUN_MONTHLY_FITNESS_STATS` fields to `True` below:
+Chronumental will automatically be re-run, since the inferred emergence dates of recombinants are required for this analysis. If you are using a different MAT than the one used in this analysis or wish to re-generate these results (already included in the `data` directory for this MAT), toggle the `RERUN_GENETIC_DIVERSITY` field to `True` below:
 
 ```
 # Decide which steps to rerun
 RERUN_CHRONUMENTAL: True
 RERUN_GENETIC_DIVERSITY: False  # Or provide a single month, i.e., "2020-07"
-RERUN_MONTHLY_FITNESS_STATS: False
 ```
 
 Run the following command to generate the data used in this analysis:
 ```
 pixi run data
+```
+
+If you want to reproduce the monthly circulating fitness statistics (`monthly_fitness_stats.csv`), you can run the pixi task command below, after running the above `pixi run data` command to generate the Chronumental file. This command requires the Chronumental dates output file to be in the `data` directory.
+
+```
+pixi run circulating-fitness-stats
 ```
 
 

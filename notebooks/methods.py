@@ -54,6 +54,11 @@ class RecombAnalysis:
         """ """
         return self.recomb_data
 
+    def getPangoRecombData(self):
+        """ """
+        pango_df = load_df(self.config.PANGO_RECOMBS_FILE)
+        return pango_df.join(self.monthly_fitness_stats, on="Month")
+
     def toDataframe(self):
         """ """
         return self.df
