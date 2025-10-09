@@ -99,7 +99,6 @@ class Config:
         self.DATA_DIR = data_dir
         self.RERUN_CHRONUMENTAL = config["RERUN_CHRONUMENTAL"]
         self.RERUN_GENETIC_DIVERSITY = config["RERUN_GENETIC_DIVERSITY"]
-        self.RERUN_MONTHLY_FITNESS_STATS = config["RERUN_MONTHLY_FITNESS_STATS"]
 
     def __check_files_exist(self):
         for name, value in self.__dict__.items():

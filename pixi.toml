@@ -2,7 +2,7 @@
 authors = ["mrkylesmith"]
 channels = ["conda-forge", "bioconda"]
 name = "recomb-experiments"
-platforms = ["osx-arm64"]
+platforms = ["osx-arm64", "linux-64"]
 version = "0.1.0"
 
 [dependencies]
@@ -20,9 +20,13 @@ chronumental = { version = ">=0.0.65,<0.0.66", channel = "bioconda" }
 usher = { version = ">=0.6.6,<0.7", channel = "bioconda" }
 cyvcf2 = ">=0.31.1,<0.32"
 
+[feature.bte-env.dependencies]
+bte = "*"
+
 [environments]
 data-env = { features = ["data-env"] }
 pyro-env = { features = ["pyro-env"] }
+bte-env = { features = ["bte-env"] }
 
 [feature.pyro-env.dependencies]
 cyvcf2 = ">=0.31.1,<0.32"
@@ -32,5 +36,7 @@ numpy = ">=2.3.3,<3"
 pyrocov = { path = "./notebooks/third_party/pyro-cov", editable = true }
 
 [tasks]
+get-sample-mutations = { cmd = "pixi run --environment bte-env python notebooks/get_mutations.py" }
+circulating-fitness-stats = { cmd = "pixi run --environment pyro-env python notebooks/fitness_stats.py", depends-on = ["get-sample-mutations"] }
 recomb-trios-fitness = { cmd = "pixi run --environment pyro-env python notebooks/fitness.py" }
 data = { cmd = "pixi run --environment data-env python run.py", depends-on = ["recomb-trios-fitness"]  }

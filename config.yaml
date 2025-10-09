@@ -16,7 +16,6 @@ RIVET_VCF_FILE: "trios.vcf"
 # Decide which steps to rerun
 RERUN_CHRONUMENTAL: True
 RERUN_GENETIC_DIVERSITY: False  # Or provide a single month, ie) "2020-07" 
-RERUN_MONTHLY_FITNESS_STATS: False
 
 # Names of data files in the 'DATA_DIR' directory
 RECOMBINATION_STATS_FILE: "rivet_recombs_data.csv"
