@@ -1,4 +1,4 @@
-# recomb-experiments
+# SARS-CoV-2 Recombination Analysis
 
 ## Table of Contents
 - [Setup](#setup)
@@ -25,8 +25,8 @@ curl -fsSL https://pixi.sh/install.sh | sh
 
 To clone this repository, type the following command: (This will take a couple of minutes)
 ```
-git clone --recurse-submodules https://github.com/TurakhiaLab/recomb-experiments.git
-cd recomb-experiments
+git clone --recurse-submodules https://github.com/TurakhiaLab/SARS2_RecombinationAnalysis.git
+cd SARS2_RecombinationAnalysis
 ```
 
 
