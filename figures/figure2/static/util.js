@@ -75,6 +75,9 @@ function getMonthsCollection(end_month) {
   for (let i = 0; i < YEARS.length; ++i) {
     for (let j = 0; j < MONTHS.length; ++j) {
       let interval = YEARS[i] + "-" + MONTHS[j];
+      if (interval === "2020-01") {
+        continue;
+      }
       YEAR_MONTH.push(interval);
       if (interval == end_month) {
         return YEAR_MONTH;

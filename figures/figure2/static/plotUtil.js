@@ -165,7 +165,11 @@ function addCurve(svg, data, config) {
           return x(d[config["X_VAR"]]) + x.bandwidth() / HALF;
         })
         .y(function (d) {
-          return y(config["castValueAs"](d[config["Y_VAR"]]));
+          const val = d[config["Y_VAR"]];
+          if (val < 0) {
+            return y(0);
+          }
+          return y(config["castValueAs"](val));
         }),
     );
 }
