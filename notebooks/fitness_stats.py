@@ -1,7 +1,6 @@
 """
 Script run by `circulating-fitness-stats` pixi task to generate basic statistics for the fitness of all circulating samples for each month.
 """
-#from fitness_util import get_nt_mutations, get_fitness_scores
 import numpy as np
 import math
 import os

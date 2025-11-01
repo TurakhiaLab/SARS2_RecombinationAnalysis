@@ -71,7 +71,12 @@ cp trios_2023-12-25.vcf data/
 ```
 
 ### <a name="rivet"></a> Running RIVET to infer recombination
-TODO: Add instructions for running RIVET separately.
+
+Please see the instructions for installing `RIVET` on your machine: [Use RIVET Locally](https://turakhia.ucsd.edu/rivet/#use-rivet-locally)
+
+Once `RIVET` is installed, please see the instructions for running the `RIVET` "backend" pipeline and the required inputs to infer recombination: [RIVET Backend Input](https://turakhia.ucsd.edu/rivet/#rivet-backend-input)
+
+Two of the `RIVET` output files, `final_recombinants_<DATE>.txt` and `trios.vcf` were used in this analysis (`RIVET_RESULTS_FILE` and `RIVET_VCF_FILE` fields in `config.yaml`).
 
 
 ### <a name="data_gen"></a>Generating Data Files
