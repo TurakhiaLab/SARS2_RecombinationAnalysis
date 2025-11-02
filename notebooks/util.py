@@ -100,8 +100,9 @@ class Config:
         self.PANGO_RECOMBS_FILE = os.path.join(data_dir, Config.PANGO_RECOMBS_FILE)
 
         self.DATA_DIR = data_dir
-        self.RERUN_CHRONUMENTAL = config["RERUN_CHRONUMENTAL"]
-        self.RERUN_GENETIC_DIVERSITY = config["RERUN_GENETIC_DIVERSITY"]
+        # TODO: Old, can remove
+        #self.RERUN_CHRONUMENTAL = config["RERUN_CHRONUMENTAL"]
+        #self.RERUN_GENETIC_DIVERSITY = config["RERUN_GENETIC_DIVERSITY"]
 
     def __check_files_exist(self):
         for name, value in self.__dict__.items():

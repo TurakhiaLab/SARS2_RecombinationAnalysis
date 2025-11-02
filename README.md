@@ -8,6 +8,7 @@
     - [Running RIVET to infer recombination](#rivet)
     - [Generating Data Files](#data_gen)
 - [Notebook for Recombination Analysis](#notebook)
+    - [Supplemental Analysis](#supp_analysis)
 - [References](#references)
 
 
@@ -82,28 +83,21 @@ Two of the `RIVET` output files, `final_recombinants_<DATE>.txt` and `trios.vcf`
 ### <a name="data_gen"></a>Generating Data Files
 Follow these steps to generate all the data files used in the recombination analysis notebook, primarily `rivet_recombs_data.csv`.
 
-**NOTE:** The standing genetic diversity results could take several days to complete for a MAT with millions of sequences.
-To compute the standing genetic diversity metric for just a single month (faster), provide the month in the `RERUN_GENETIC_DIVERSITY` field below, as follows:
+Chronumental will be automatically re-run, since the inferred emergence dates of recombinants are required for this analysis. See the `config.yaml` field below.
 ```
-RERUN_GENETIC_DIVERSITY: "2020-07"
-```
-Or if you want to reproduce the entire standing genetic diversity file (`genetic-diversity-gisaidAndPublic.2023-12-25.csv`) for all months, toggle the `RERUN_GENETIC_DIVERSITY` field to `True`, as follows:
-```
-RERUN_GENETIC_DIVERSITY: True
-```
-
-Chronumental will automatically be re-run, since the inferred emergence dates of recombinants are required for this analysis. If you are using a different MAT than the one used in this analysis or wish to re-generate these results (already included in the `data` directory for this MAT), toggle the `RERUN_GENETIC_DIVERSITY` field to `True` below:
-
-```
-# Decide which steps to rerun
 RERUN_CHRONUMENTAL: True
-RERUN_GENETIC_DIVERSITY: False  # Or provide a single month, i.e., "2020-07"
 ```
 
 Run the following command to generate the data used in this analysis:
 ```
 pixi run data
 ```
+
+If you are using a different MAT than the one used in this analysis or wish to re-generate these results (already included in the `data` directory for the MAT used in this analysis), follow the instructions at the link provided below to reproduce the entire standing genetic diversity file (`genetic-diversity-gisaidAndPublic.2023-12-25.csv`) for all months.
+
+- Instructions: [Calculate Standing Genetic Diversity](docs/diversity.md)
+
+<br>
 
 If you want to reproduce the monthly circulating fitness statistics (`monthly_fitness_stats.csv`), you can run the pixi task command below, after running the above `pixi run data` command to generate the Chronumental file. This command requires the Chronumental dates output file to be in the `data` directory.
 
@@ -112,7 +106,7 @@ pixi run circulating-fitness-stats
 ```
 
 
-# <a name="notebook"></a>Notebook for Recombination Analysis
+# <a name="notebook"></a>Notebooks for Recombination Analysis
 The Jupyter notebook `notebooks/analysis.ipynb` reproduces the analyses and statistics reported in the manuscript using the following files from the `data` directory:
 - `rivet_recombs_data.csv`
 - `substitutions_scores.csv`
@@ -126,6 +120,10 @@ pixi shell
 # Then launch the notebook
 pixi run jupyter lab notebooks/analysis.ipynb
 ```
+
+## <a name="supp_analysis"></a>Supplemental Analysis
+
+For more documentation on reproducing the supplemental analysis and figures, please see this section: [Supplemental Analysis](docs/supplemental.md)
 
 
 # <a name="references"></a>References

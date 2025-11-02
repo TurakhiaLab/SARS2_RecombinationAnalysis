@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Figure S2 Panel b</title>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <!-- Simple Statistics lib -->
+    <script src="https://unpkg.com/simple-statistics@7.8.2/dist/simple-statistics.min.js"></script>
+
+    <button id="downloadButton" type="submit" value="Submit">
+      Download SVG
+    </button>
+
+    <div id="scatterplot"></div>
+    <script type="module">
+      import { scatter } from "./static/scatter_with_marginal_histograms.js";
+      import { downloadSVG } from "./static/util.js";
+
+      const scatterColor = function (score, month, stats) {
+        if (score > stats[month]["Percentile99"]) {
+          return "red";
+        } else if (
+          score > stats[month]["Percentile75"] &&
+          score <= stats[month]["Percentile99"]
+        ) {
+          return "#124E78";
+        } else if (
+          score < stats[month]["Percentile75"] &&
+          score > stats[month]["Percentile50"]
+        ) {
+          return "#93D3AE";
+        } else if (score < stats[month]["Percentile50"]) {
+          return "gray";
+        } else {
+          alert("Unranked grouped mutation");
+          return "black";
+        }
+      };
+
+      const config = {
+        title: "",
+        yAxisTitle: "",
+        xAxisTitle: "",
+
+        scatterDivID: "#scatterplot",
+        filename: "static/data/covfit_data.csv",
+        statsFilename: "static/data/monthly_fitness_stats.csv",
+
+        // Plot settings
+        baseline: true, // Horizontal baseline for average parental divergence
+        verticalBaseline: true,
+        axisTickLabelSize: "15",
+        showBarQuantity: false,
+
+        // Define data
+        RawScore: "Score",
+        Score: "RecombFitnessNormalizedByMaxParents",
+        DiversityScore: "DiversityScore",
+        ClusterSize: "UShERClusterSize",
+        ParentalDiversity: "ParentsHD",
+        NormalizeByMinParents: false,
+        DonorScore: "DonorFitness",
+        AcceptorScore: "AcceptorFitness",
+
+        fitnessHistConfig: {
+          binWidth: 0.025,
+          domainStart: 0.0,
+        },
+
+        //Color by function for scatterplot points
+        colorby: scatterColor,
+
+        // Plot dimensions
+        margin: {
+          top: 100,
+          right: 200,
+          bottom: 150,
+          left: 150,
+        },
+        width: 2000,
+        height: 1300,
+
+        // Config for the figure legend
+        legend: true,
+        legendLabels: [
+          ">99th Percentile",
+          ">75th Percentile",
+          ">50th Percentile",
+          "<=50th Percentile",
+        ],
+        legendColors: ["red", "#124E78", "#93D3AE", "gray"],
+
+        // Legend Positioning
+        legendCX: 1240,
+        legendCY: 200,
+        legendXAttr: 1260,
+        legendYAttr: 197,
+        legendFontSize: "20px",
+      };
+
+      let svg = d3
+        .select(config["scatterDivID"])
+        .append("svg")
+        .attr("width", config["width"])
+        .attr("height", config["height"])
+        .append("g")
+        .attr(
+          "transform",
+          "translate(" +
+            config["margin"].left +
+            "," +
+            config["margin"].top +
+            ")",
+        );
+
+      scatter(svg, config);
+
+      const svgFilename = "figureS8.svg";
+      document
+        .getElementById("downloadButton")
+        .addEventListener("click", () => {
+          downloadSVG(svg, svgFilename);
+        });
+    </script>
+  </body>
+</html>
