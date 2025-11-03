@@ -14,6 +14,7 @@ pyarrow = ">=17.0.0,<18"
 numpy = ">=2.3.3,<3"
 pandas = ">=2.3.2,<3"
 cyvcf2 = ">=0.31.1,<0.32"
+#vcflib = ">=1.0.14,<2"
 
 [feature.data-env.dependencies]
 chronumental = { version = ">=0.0.65,<0.0.66", channel = "bioconda" }
@@ -23,11 +24,6 @@ cyvcf2 = ">=0.31.1,<0.32"
 [feature.bte-env.dependencies]
 bte = "*"
 
-[environments]
-data-env = { features = ["data-env"] }
-pyro-env = { features = ["pyro-env"] }
-bte-env = { features = ["bte-env"] }
-
 [feature.pyro-env.dependencies]
 cyvcf2 = ">=0.31.1,<0.32"
 numpy = ">=2.3.3,<3"
@@ -35,7 +31,21 @@ numpy = ">=2.3.3,<3"
 [feature.pyro-env.pypi-dependencies]
 pyrocov = { path = "./notebooks/third_party/pyro-cov", editable = true }
 
+[feature.covfit-env.dependencies]
+biopython = ">=1.86,<2"
+numpy = ">=2.3.3,<3"
+polars = ">=1.33.1,<2"
+usher = { version = ">=0.6.6,<0.7", channel = "bioconda" }
+vcflib = ">=1.0.14,<2"
+
+[environments]
+data-env = { features = ["data-env"] }
+pyro-env = { features = ["pyro-env"] }
+bte-env = { features = ["bte-env"] }
+covfit-env = { features = ["covfit-env"] }
+
 [tasks]
+covfit = { cmd = "pixi run --environment covfit-env python notebooks/covfit_preprocess.py"}
 get-sample-mutations = { cmd = "pixi run --environment bte-env python notebooks/get_mutations.py" }
 circulating-fitness-stats = { cmd = "pixi run --environment pyro-env python notebooks/fitness_stats.py", depends-on = ["get-sample-mutations"] }
 recomb-trios-fitness = { cmd = "pixi run --environment pyro-env python notebooks/fitness.py" }
