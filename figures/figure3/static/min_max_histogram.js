@@ -1,4 +1,4 @@
-import { roundTo } from "../../common/util.js";
+import { roundTo } from "./util.js";
 
 async function histogram(svg, config) {
   // Constants

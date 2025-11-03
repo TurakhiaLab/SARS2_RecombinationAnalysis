@@ -22,6 +22,6 @@ The CoVFit CLI executable version “covfit_cli_20241007” was downloaded from 
 
 Run the following command to perform inference:
 ```
-./covfit_cli --input all_spike_translated.fasta -outdir output/ --fold 3 --dms --batch 16 --gpu
+./covfit_cli --input data/all_spike_translated.fasta -outdir output/ --fold 3 --dms --batch 16 --gpu
 ```
 
