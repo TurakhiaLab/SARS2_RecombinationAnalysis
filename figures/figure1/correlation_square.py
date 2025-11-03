@@ -56,7 +56,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Script to create Pearson correlation matrix plot for Figure 1 Panel c."
     )
-    parser.add_argument("--stats", "-s", help="Path to data (CSV) file.")
+    parser.add_argument("--stats", "-s", required=True, help="Path to data (CSV) file.")
     args = parser.parse_args()
     plot(args.stats, SAVE_AS)
 

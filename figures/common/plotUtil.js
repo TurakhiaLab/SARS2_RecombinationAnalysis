@@ -1,12 +1,12 @@
 // Utilities for constructing D3 plots
 
 function getTooltip(divID, config) {
-  //TODO: Use config within tooltip settings
   const tooltip = d3
     .select(divID)
     .append("div")
     .style("opacity", 0)
     .attr("class", "tooltip")
+    .attr("id", "tooltip")
     .style("background-color", "grey")
     .style("border-radius", "3px")
     .style("padding", "10px")
@@ -18,12 +18,12 @@ function addLegend(svg, config) {
   const COLORS = d3.scaleOrdinal().range(config["legendColors"]);
   const SHIFT_FACTOR = 35;
   const LEGEND_CIRCLE_RADIUS = 15;
-  // TODO: Push to config
-  const CX_VAR = 35;
-  const CY_VAR = 60;
-  const X_ATTR_VAR = 55;
-  const Y_ATTR_VAR = 57;
-  const FONT_SIZE = "16px";
+
+  const CX_VAR = config["legendCX"];
+  const CY_VAR = config["legendCY"];
+  const X_ATTR_VAR = config["legendXAttr"];
+  const Y_ATTR_VAR = config["legendYAttr"];
+  const FONT_SIZE = config["legendFontSize"];
 
   let legend = svg
     .selectAll("labels")
@@ -54,6 +54,69 @@ function addLegend(svg, config) {
     });
 }
 
+function bindYAxis(svg, axisConfig) {
+  svg
+    .append("g")
+    .call(axisConfig["axis"])
+    .style("font-size", axisConfig["font-size"])
+    .append("text")
+    .attr("transform", axisConfig["transform"])
+    .attr("x", axisConfig["x"])
+    .attr("y", axisConfig["y"])
+    .attr("dominant-baseline", axisConfig["dominant-baseline"])
+    .style("fill", axisConfig["fill"]);
+
+  if (axisConfig["title"]) {
+    const titleConfig = axisConfig["titleConfig"];
+    svg
+      .append("text")
+      .attr("text-anchor", titleConfig["text-anchor"])
+      .attr("x", titleConfig["x"])
+      .attr("y", titleConfig["y"])
+      .attr("dy", titleConfig["dy"])
+      .style("font-size", titleConfig["font-size"])
+      .attr("transform", titleConfig["transform"])
+      .style("fill", titleConfig["fill"])
+      .text(titleConfig["text"]);
+  }
+}
+
+function bindDataAxis(svg, axisConfig) {
+  svg
+    .append("g")
+    .attr("transform", axisConfig["transform"])
+    .data(axisConfig["data"])
+    .call(axisConfig["axis"])
+    .style("font-size", axisConfig["font-size"]);
+
+  if (axisConfig["labels"]) {
+    svg
+      .selectAll("text")
+      .style("text-anchor", axisConfig["text-anchor"])
+      .attr("dx", axisConfig["dx"])
+      .attr("dy", axisConfig["dy"])
+      .attr("transform", axisConfig["transform-text"]);
+  }
+
+  if (axisConfig["title"]) {
+    const titleConfig = axisConfig["titleConfig"];
+    const X = titleConfig["x"];
+    const Y = titleConfig["y"];
+    const width = axisConfig["width"];
+    const height = axisConfig["height"];
+    // Add x-axis title
+    svg
+      .append("text")
+      .attr("text-anchor", titleConfig["text-anchor"])
+      .attr("x", width / X)
+      .attr("y", height + Y)
+      .attr("dx", titleConfig["dx"])
+      .style("font-size", titleConfig["font-size"])
+      .style("fill", titleConfig["fill"])
+      .text(titleConfig["text"]);
+  }
+}
+
 function bindAxis(svg, axis, plotConfig, axisConfig) {
   // Axis formatting
   svg
@@ -65,6 +128,8 @@ function bindAxis(svg, axis, plotConfig, axisConfig) {
     .style("text-anchor", "end")
     .attr("dx", axisConfig["dx"])
     .attr("dy", axisConfig["dy"])
+    .attr("dominant-baseline", axisConfig["dominant-baseline"])
+    .style("fill", axisConfig["fill"])
     .attr("transform", axisConfig["rotateTicks"]);
 
   if (axisConfig["title"]) {
@@ -95,14 +160,37 @@ function addCurve(svg, data, config) {
       "d",
       d3
         .line()
-        .curve(d3.curveBasis)
+        .curve(d3.curveLinear)
         .x(function (d) {
           return x(d[config["X_VAR"]]) + x.bandwidth() / HALF;
         })
         .y(function (d) {
           return y(config["castValueAs"](d[config["Y_VAR"]]));
-        })
+        }),
     );
+}
+
+function addLine(svg, config) {
+  svg
+    .append("g")
+    .attr("transform", "translate(0, " + config["translate"] + ")")
+    .append("line")
+    .attr("x2", config["width"])
+    .style("stroke", config["stroke"])
+    .style("stroke-dasharray", config["stroke-dasharray"])
+    .style("stroke-width", config["stroke-width"]);
+}
+
+function addVerticalLine(svg, config) {
+  svg
+    .append("line")
+    .attr("x1", config["x1"])
+    .attr("y1", config["y1"])
+    .attr("x2", config["x2"])
+    .attr("y2", config["y2"])
+    .style("stroke", config["stroke"])
+    .style("stroke-dasharray", config["stroke-dasharray"])
+    .style("stroke-width", config["stroke-width"]);
 }
 
 function addArea(svg, data, config) {
@@ -131,7 +219,7 @@ function addArea(svg, data, config) {
         })
         .y1(function (d) {
           return y(config["castValueAs"](d[config["Y1_VAR"]]));
-        })
+        }),
     );
 
   if (config["boldOutline"]) {
@@ -164,7 +252,7 @@ function addArea(svg, data, config) {
 export { getTooltip };
 
 // Plot components
-export { addCurve, addArea, addLegend };
+export { addCurve, addLine, addVerticalLine, addArea, addLegend };
 
 // Plot binding functions
-export { bindAxis };
+export { bindAxis, bindYAxis, bindDataAxis };

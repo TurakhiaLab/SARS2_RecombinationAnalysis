@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 import polars as pl
 
 # Pango recombinant lineage sample emergence and designation dates
-DESIGNATION_DATES_FILENAME = "data/pango-designation-dates.csv"
+DESIGNATION_DATES_FILENAME = "static/data/pango-designation-dates.csv"
 
 def calculate_total_months(years, months):
     return years * 12 + months
@@ -28,7 +28,7 @@ def to_csv(df, filename):
     df.write_csv(filename)
 
 def main():
-    OUTFILE = "data/pango_recombinant_dates.csv"
+    OUTFILE = "static/data/pango_recombinant_dates.csv"
     dates_df = df(DESIGNATION_DATES_FILENAME)
     delay_df = calculate_delay(dates_df)
     to_csv(delay_df, OUTFILE)
