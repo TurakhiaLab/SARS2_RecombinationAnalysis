@@ -14,12 +14,16 @@ RIVET_RESULTS_FILE: "final_recombinants_2023-12-25.txt"
 RIVET_VCF_FILE: "trios.vcf"
 
 # Decide which steps to rerun
-RERUN_CHRONUMENTAL: True
+RERUN_CHRONUMENTAL: False
 
 # Names of data files in the 'DATA_DIR' directory
 RECOMBINATION_STATS_FILE: "rivet_recombs_data.csv"
+RECOMBINATION_STATS_FILE_BVAS: "rivet_recombs_bvas_data.csv"
 CHRONUMENTAL_FILE: "chronumental_dates_gisaidAndPublic.2023-12-25-STEPS2000-SERIAL3.metadata.tsv.tsv"
 PYRO_MUTATIONS_FILE: "mutations.tsv"
+BVAS_MUTATIONS_FILE: "allele_summary.csv"
+# Method to infer fitness with. Options: "PYRO" or "BVAS"
+CALCULATE_FITNESS_USING: "BVAS"
 CASES_FILE: "time_series_covid19_confirmed_global.csv"
 GENETIC_DIVERSITY_FILE: "genetic-diversity-gisaidAndPublic.2023-12-25.csv"
 MONTHLY_FITNESS_STATS: "monthly_fitness_stats.csv"

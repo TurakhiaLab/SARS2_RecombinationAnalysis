@@ -30,6 +30,7 @@ RIVET_CONFIG = {
 URLS = {
     "cases": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",
     "fitness": "https://raw.githubusercontent.com/broadinstitute/pyro-cov/7d2829dc9c209399ecc188f2c87a881bdb09b221/paper/mutations.tsv",
+    "bvas-fitness": "https://raw.githubusercontent.com/broadinstitute/bvas/refs/heads/main/paper/09.13.23/allele_summary.csv",
 }
 
 
@@ -62,6 +63,7 @@ MONTHS = get_months()
 
 class Config:
     RECOMB_TRIOS_FITNESS_FILE = "rivet_trios_fitness_data.csv"
+    RECOMB_TRIOS_BVAS_FITNESS_FILE = "rivet_trios_bvas_fitness_data.csv"
     PANGO_RECOMBS_FILE = "pango_recombs_data.csv"
 
     def __init__(self, config_filename):
@@ -87,27 +89,46 @@ class Config:
         self.RECOMBINATION_STATS_FILE = os.path.join(
             data_dir, config["RECOMBINATION_STATS_FILE"]
         )
+        self.RECOMBINATION_STATS_FILE_BVAS = os.path.join(
+            data_dir, config["RECOMBINATION_STATS_FILE_BVAS"]
+        )
+
         # Fitness stats each month for all circulating samples
         self.MONTHLY_FITNESS_STATS_FILE = os.path.join(
             data_dir, config["MONTHLY_FITNESS_STATS"]
         )
         # Fitness scores for all substitution mutations found in the MAT
         self.SUBTITUTION_SCORES = os.path.join(data_dir, config["SUBTITUTION_SCORES"])
-        #self.__check_files_exist()
+        # self.__check_files_exist()
         self.MAT_DATE = os.path.join(data_dir, config["MAT_DATE"])
         self.MAT = os.path.join(data_dir, config["MAT"])
         self.METADATA = os.path.join(data_dir, config["METADATA"])
         self.PANGO_RECOMBS_FILE = os.path.join(data_dir, Config.PANGO_RECOMBS_FILE)
 
         self.DATA_DIR = data_dir
-        # TODO: Old, can remove
-        #self.RERUN_CHRONUMENTAL = config["RERUN_CHRONUMENTAL"]
-        #self.RERUN_GENETIC_DIVERSITY = config["RERUN_GENETIC_DIVERSITY"]
+        self.BVAS_MUTATIONS_FILE = os.path.join(data_dir, config["BVAS_MUTATIONS_FILE"])
+        self.CALCULATE_FITNESS_USING = config["CALCULATE_FITNESS_USING"]
+        self.RERUN_CHRONUMENTAL = config["RERUN_CHRONUMENTAL"]
 
     def __check_files_exist(self):
         for name, value in self.__dict__.items():
             if not os.path.exists(value):
                 raise FileNotFoundError(f"The file '{value}' does not exist.")
+
+    def get_recombination_stats_outfile(self):
+        """"""
+        if self.CALCULATE_FITNESS_USING == "PYRO":
+            return self.RECOMBINATION_STATS_FILE
+        else:
+            return self.RECOMBINATION_STATS_FILE_BVAS
+
+    def get_fitness_outfile(self):
+        """"""
+        if self.CALCULATE_FITNESS_USING == "PYRO":
+            return self.fitness_results_path
+        else:
+            # Return BVAS fitness output file
+            return self.RECOMB_TRIOS_BVAS_FITNESS_FILE
 
 
 def download(url, local_filepath):
@@ -132,6 +153,23 @@ def download(url, local_filepath):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         exit(1)
+
+
+def file_exists(filepath):
+    """TODO:"""
+    if os.path.exists(filepath):
+        return True
+    return False
+
+
+def try_download(filepath, url):
+    """
+    If file exists locally, do nothing. Otherwise try to download file from url.
+    """
+    if file_exists(filepath):
+        return
+    print(f"Filepath {filepath} doesn't exist locally, downloading from: {url}")
+    download(url, filepath)
 
 
 def download_data_files(data_dir, override=False):
@@ -452,11 +490,11 @@ def merge_datafiles(config):
     assert sum(recombs_per_month_dict.values()) == len(recomb_nodes)
 
     # Load recombinant trios fitness file
-    recomb_trios_fitness_df = get_recombinant_trios_fitness(config.fitness_results_path)
+    recomb_trios_fitness_df = get_recombinant_trios_fitness_v2(config)
 
     trios_nt_mutations_dict = get_nt_mutations(config.RIVET_VCF_FILE)
+    outfile = config.get_recombination_stats_outfile()
 
-    outfile = config.RECOMBINATION_STATS_FILE
     # Format and merge all results together
     merge_datafiles_helper(
         recomb_metadata,
@@ -470,6 +508,10 @@ def merge_datafiles(config):
     )
     print("Recombination data written to: {}".format(outfile))
 
+
+def get_recombinant_trios_fitness_v2(config):
+    model = config.CALCULATE_FITNESS_USING
+    return pl.read_csv(config.get_fitness_outfile())
 
 def get_recombinant_trios_fitness(fitness_results_path):
     """

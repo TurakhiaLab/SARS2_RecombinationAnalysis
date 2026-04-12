@@ -52,3 +52,4 @@ get-sample-mutations = { cmd = "pixi run --environment bte-env python notebooks/
 circulating-fitness-stats = { cmd = "pixi run --environment pyro-env python notebooks/fitness_stats.py", depends-on = ["get-sample-mutations"] }
 recomb-trios-fitness = { cmd = "pixi run --environment pyro-env python notebooks/fitness.py" }
 data = { cmd = "pixi run --environment data-env python run.py", depends-on = ["recomb-trios-fitness"]  }
+data-only = { cmd = "pixi run --environment data-env python run.py" }

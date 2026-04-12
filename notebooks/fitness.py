@@ -10,10 +10,28 @@ from third_party.nuc_mutations_to_aa_mutations_modified import (
     nuc_mutations_to_aa_mutations_modified,
     load_reference_sequence_modified,
 )
-
-from util import Config
+from util import Config, try_download, URLS
 
 CONFIG = "config.yaml"
+
+def pyro_fitness_line_parser(line):
+    """ """
+    splitline = line.split("\t")
+    mutation = splitline[1]
+    delta_log_R = round(float(splitline[4]), 10)
+    return mutation, delta_log_R
+
+def bvas_fitness_line_parser(line):
+    """ """
+    splitline = line.split(",")
+    mutation = splitline[0]
+    beta = round(float(splitline[2]), 10)
+    return mutation, beta
+
+FITNESS_FILE_PARSER = {
+    "PYRO": pyro_fitness_line_parser,
+    "BVAS": bvas_fitness_line_parser,
+}
 
 def get_nt_mutations(vcf_filename):
     """
@@ -44,23 +62,30 @@ def get_nt_mutations(vcf_filename):
     return nodes_ids
 
 
-def get_fitness_scores(mutations_filename):
-    """
-    TODO:
-    """
-    r_ra = {}
-    fp = open(mutations_filename, "r")
+def load_fitness_scores(file, fitness_line_parser):
+    scores = {}
+    fp = open(file, "r")
     # Skip over file header
     next(fp)
     for line in fp:
-        splitline = line.split("\t")
-        rank = int(splitline[0])
-        strain = splitline[1]
-        delta_log_R = round(float(splitline[4]), 10)
-        r_ra[strain] = delta_log_R
+        mutation, score = fitness_line_parser(line)
+        scores[mutation] = score
     fp.close()
-    return r_ra
+    return scores
 
+def get_fitness_scores(config):
+    """
+    TODO:
+    """
+    model = config.CALCULATE_FITNESS_USING
+    parser = FITNESS_FILE_PARSER[model]
+    if model == "PYRO":
+        # Calculate fitness using PYRO model
+        return load_fitness_scores(config.PYRO_MUTATIONS_FILE, parser)
+    else:
+        # Calculate fitness using BVAS model
+        try_download(config.BVAS_MUTATIONS_FILE, URLS["bvas-fitness"])
+        return load_fitness_scores(config.BVAS_MUTATIONS_FILE, parser)
 
 def compute_fitness(aa_mutations, mutations_r_ra):
     """
@@ -69,8 +94,8 @@ def compute_fitness(aa_mutations, mutations_r_ra):
     # Calculate fitness of sample given additivity of mutations in this model
     fitness = 0.0
     for m in aa_mutations:
-        # Exclude any mutations unranked by PyR0
-        if m not in mutations_r_ra.keys():
+        # Exclude any unranked mutations
+        if m not in mutations_r_ra:
             continue
         fitness += mutations_r_ra[m]
     return float(math.exp(fitness))
@@ -79,19 +104,18 @@ def compute_fitness(aa_mutations, mutations_r_ra):
 def main():
     config = Config(CONFIG)
     data_dir = config.DATA_DIR
+
     # Ensure data directory is found
     if not os.path.isdir(data_dir):
         raise FileNotFoundError(f"Data Directory not found: '{data_dir}'")
 
+    print("Calculating fitness using: ", config.CALCULATE_FITNESS_USING)
     # Get amino acid mutation fitness scores from PyR0
-    mutation_fitness_scores = get_fitness_scores(config.PYRO_MUTATIONS_FILE)
+    mutation_fitness_scores = get_fitness_scores(config)
     refseq = load_reference_sequence_modified(data_dir, "reference.fasta")
 
     # Get RIVET-inferred recombinant trios vcf
     nt_mutations = get_nt_mutations(config.RIVET_VCF_FILE)
-
-    # Calculate fitness scores for all recombinant trios in RIVET results file,
-    # write results to intermediate fitness file
     print(
         "Calculating fitness scores for all recombinant trios in: {}".format(
             config.RIVET_VCF_FILE
@@ -99,7 +123,7 @@ def main():
     )
 
     # Set fitness outfile path
-    OUTFILE = config.fitness_results_path
+    OUTFILE = config.get_fitness_outfile()
     fp_out = open(OUTFILE, "w")
     COLUMNS = [
         "Node",
