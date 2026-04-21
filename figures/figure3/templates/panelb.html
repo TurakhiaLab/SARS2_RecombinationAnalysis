@@ -23,16 +23,16 @@
         if (score > stats[month]["Percentile99"]) {
           return "red";
         } else if (
-          score > stats[month]["Percentile75"] &&
-          score <= stats[month]["Percentile99"]
+          score <= stats[month]["Percentile99"] &&
+          score > stats[month]["Percentile75"]
         ) {
           return "#124E78";
         } else if (
-          score < stats[month]["Percentile75"] &&
+          score <= stats[month]["Percentile75"] &&
           score > stats[month]["Percentile50"]
         ) {
           return "#93D3AE";
-        } else if (score < stats[month]["Percentile50"]) {
+        } else if (score <= stats[month]["Percentile50"]) {
           return "gray";
         } else {
           alert("Unranked grouped mutation");
@@ -44,8 +44,13 @@
         scatterDivID: "#scatterplot",
 
         // Data files
-        filename: "static/data/rivet_recombs_data.csv",
-        statsFilename: "static/data/monthly_fitness_stats.csv",
+        // PYR0 data files
+        //filename: "static/data/rivet_recombs_data.csv",
+        //statsFilename: "static/data/monthly_fitness_stats.csv",
+
+        // BVAS data files
+        filename: "static/data/rivet_recombs_bvas_data.csv",
+        statsFilename: "static/data/monthly_fitness_stats_bvas.csv",
 
         title: "",
         yAxisTitle: "",

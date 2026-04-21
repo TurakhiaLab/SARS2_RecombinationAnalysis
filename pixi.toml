@@ -12,10 +12,11 @@ jupyterlab = ">=4.4.7,<5"
 pyyaml = ">=6.0.3,<7"
 pyarrow = ">=17.0.0,<18"
 numpy = ">=2.3.3,<3"
-pandas = ">=2.3.2,<3"
+pandas = ">=3.0.2,<4"
 cyvcf2 = ">=0.31.1,<0.32"
 flask = ">=3.1.2,<4"
 seaborn = ">=0.13.2,<0.14"
+matplotlib = ">=3.10.8,<4"
 #vcflib = ">=1.0.14,<2"
 
 [feature.data-env.dependencies]
@@ -50,6 +51,7 @@ covfit-env = { features = ["covfit-env"] }
 covfit = { cmd = "pixi run --environment covfit-env python notebooks/covfit_preprocess.py"}
 get-sample-mutations = { cmd = "pixi run --environment bte-env python notebooks/get_mutations.py" }
 circulating-fitness-stats = { cmd = "pixi run --environment pyro-env python notebooks/fitness_stats.py", depends-on = ["get-sample-mutations"] }
+circulating-fitness-stats-only = { cmd = "pixi run --environment pyro-env python notebooks/fitness_stats.py" }
 recomb-trios-fitness = { cmd = "pixi run --environment pyro-env python notebooks/fitness.py" }
 data = { cmd = "pixi run --environment data-env python run.py", depends-on = ["recomb-trios-fitness"]  }
 data-only = { cmd = "pixi run --environment data-env python run.py" }

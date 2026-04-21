@@ -6,7 +6,7 @@ from flask import Flask, render_template, abort
 import sys
 
 ALLOWED_PAGES = ["panela.html", "panelb.html", "panelc.html", "paneld.html"]
-DEFAULT_PORT = 5000
+DEFAULT_PORT = 8000
 ERROR_MESSAGE = "Provide one of the pages to view: {}".format(ALLOWED_PAGES)
 
 if len(sys.argv) > 1:

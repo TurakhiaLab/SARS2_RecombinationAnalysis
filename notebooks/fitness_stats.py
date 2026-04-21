@@ -1,84 +1,92 @@
 """
 Script run by `circulating-fitness-stats` pixi task to generate basic statistics for the fitness of all circulating samples for each month.
 """
+
 import numpy as np
 import math
+import time
 import os
 import pickle
-import dbm
 import statistics
+import polars as pl
 from cyvcf2 import VCF
 from third_party.nuc_mutations_to_aa_mutations_modified import (
     nuc_mutations_to_aa_mutations_modified,
     load_reference_sequence_modified,
 )
-
-from util import Config, download_data_files, get_chronumental_dates, get_months
+from util import (
+    Config,
+    download_data_files,
+    get_chronumental_dates,
+    get_months,
+    get_fitness_scores,
+    partition_samples_by_month,
+)
 
 CONFIG = "config.yaml"
-PICKLED_SAMPLE_MUTATIONS_FILE = "all_sample_mutations.pkl"
-
-def get_fitness_scores(mutations_filename):
-    """
-    TODO:
-    """
-    r_ra = {}
-    fp = open(mutations_filename, "r")
-    # Skip over file header
-    next(fp)
-    for line in fp:
-        splitline = line.split("\t")
-        rank = int(splitline[0])
-        strain = splitline[1]
-        delta_log_R = round(float(splitline[4]), 10)
-        r_ra[strain] = delta_log_R
-    fp.close()
-    return r_ra
+CACHED_SAMPLE_MUTATIONS_FILE = "all_sample_mutations.parquet"
 
 
 def compute_fitness(aa_mutations, mutations_r_ra):
     """
     TODO:
     """
-    # Calculate fitness of sample given additivity of mutations in this model
     fitness = 0.0
     for m in aa_mutations:
-        # Exclude any mutations unranked by PyR0
-        if m not in mutations_r_ra.keys():
+        # Exclude any unranked mutations
+        if m not in mutations_r_ra:
             continue
         fitness += mutations_r_ra[m]
-    return float(math.exp(fitness))
+    return 1 + fitness
 
 
-def calculate_fitness_stats(mutations_file_path, refseq, mutation_fitness_scores, sample_months):
+def calculate_fitness_stats(
+    config, mutations_file_path, refseq, mutation_fitness_scores, samples_by_month
+):
     """
     TODO:
     """
-    scores = dict()
-    # Collecting samples fitness scores for each month
-    months = get_months()
-    for month in months:
-        scores[month] = []
+    month_mapping = pl.DataFrame(
+        [
+            {"sample_id": sample, "month": month}
+            for month, samples in samples_by_month.items()
+            for sample in samples
+        ]
+    )
+    mutations_df = pl.read_parquet(mutations_file_path)
+    joined_df = mutations_df.join(month_mapping, on="sample_id", how="inner")
+    total_samples = joined_df.height
 
-    try:
-        with dbm.open(mutations_file_path, 'r') as db:
-            for key in db:
-                month = sample_months[key.decode('utf-8')]
-                value = pickle.loads(db[key])
-                nt_mutations = list(value['mutations'])
+    # Batch size of samples to process for logging
+    batch_size = 50_000
+    print(f"Starting fitness computation for {total_samples} total samples...")
+    start_time = time.time()
+    batch_start_time = start_time
 
-                # Translate to amino acid mutations
-                aa_mutations = nuc_mutations_to_aa_mutations_modified(refseq, nt_mutations)
+    scores = {month: [] for month in samples_by_month.keys()}
+    for i, row in enumerate(joined_df.iter_rows(named=True)):
+        month = row["month"]
+        nt_mutations = row["mutations"]
+        aa_mutations = nuc_mutations_to_aa_mutations_modified(refseq, nt_mutations)
+        sample_fitness = compute_fitness(aa_mutations, mutation_fitness_scores)
+        scores[month].append(sample_fitness)
+        # Logging
+        if (i + 1) % batch_size == 0:
+            current_time = time.time()
+            elapsed_batch = current_time - batch_start_time
+            elapsed_total = current_time - start_time
+            print(
+                f"Processed {i + 1}/{total_samples} samples... "
+                f"[Batch time: {elapsed_batch:.2f}s | Total time: {elapsed_total:.2f}s]"
+            )
+            batch_start_time = current_time
 
-                sample_fitness = compute_fitness(aa_mutations, mutation_fitness_scores)
-                if month in scores.keys():
-                    scores[month].append(sample_fitness)
-
-    except dbm.error as e:
-        print(f"dbm error: {e}")
-        raise SystemExit(1)
-
+    total_time = time.time() - start_time
+    print(
+        f"Finished computing all {total_samples} samples in {total_time:.2f} seconds."
+    )
     return scores
+
 
 def write_fitness_stats(data, outfile):
     """
@@ -87,25 +95,25 @@ def write_fitness_stats(data, outfile):
     fp_out = open(outfile, "w")
 
     COLUMNS = [
-    "Month",
-    "Mean",
-    "LogMean",
-    "Median",
-    "LogMedian",
-    "Max",
-    "LogMax",
-    "StandardDeviation",
-    "LogStandardDeviation",
-    "Percentile50",
-    "LogPercentile50",
-    "Percentile75",
-    "LogPercentile75",
-    "Percentile90",
-    "LogPercentile90",
-    "Percentile99",
-    "LogPercentile99",
-    "Percentile99.99",
-    "LogPercentile99.99"
+        "Month",
+        "Mean",
+        "LogMean",
+        "Median",
+        "LogMedian",
+        "Max",
+        "LogMax",
+        "StandardDeviation",
+        "LogStandardDeviation",
+        "Percentile50",
+        "LogPercentile50",
+        "Percentile75",
+        "LogPercentile75",
+        "Percentile90",
+        "LogPercentile90",
+        "Percentile99",
+        "LogPercentile99",
+        "Percentile99.99",
+        "LogPercentile99.99",
     ]
 
     HEADER = ",".join(COLUMNS)
@@ -116,7 +124,7 @@ def write_fitness_stats(data, outfile):
         median = statistics.median(scores)
         log_median = math.log(median)
         max_ = max(scores)
-        std_dev = statistics.stdev(scores) 
+        std_dev = statistics.stdev(scores)
         percentile_50 = np.percentile(scores, 50)
         percentile_75 = np.percentile(scores, 75)
         percentile_90 = np.percentile(scores, 90)
@@ -141,9 +149,10 @@ def write_fitness_stats(data, outfile):
             str(percentile_99),
             str(math.log(percentile_99)),
             str(percentile_99_99),
-            str(math.log(percentile_99_99))
+            str(math.log(percentile_99_99)),
         ]
         fp_out.write(",".join(ROW) + "\n")
+
 
 def main():
     config = Config(CONFIG)
@@ -157,16 +166,22 @@ def main():
     download_data_files(config.DATA_DIR)
 
     # Get amino acid mutation fitness scores from PyR0
-    mutation_fitness_scores = get_fitness_scores(config.PYRO_MUTATIONS_FILE)
+    print("Using fitness model: ", config.CALCULATE_FITNESS_USING)
+    mutation_fitness_scores = get_fitness_scores(config)
     refseq = load_reference_sequence_modified(data_dir, "reference.fasta")
-    
+
     # Get months of each sample from Chronumental file
     sample_months = get_chronumental_dates(config.CHRONUMENTAL_FILE)
+    print("Finished loading Chronumental dates")
+    samples_by_month = partition_samples_by_month(sample_months)
 
-    mutations_file_path = os.path.join(data_dir, PICKLED_SAMPLE_MUTATIONS_FILE)
-    scores = calculate_fitness_stats(mutations_file_path, refseq, mutation_fitness_scores, sample_months)
-    write_fitness_stats(scores, config.MONTHLY_FITNESS_STATS_FILE)
-    print("All sample monthly fitness stats written to: ", config.MONTHLY_FITNESS_STATS_FILE)
+    mutations_file_path = os.path.join(data_dir, CACHED_SAMPLE_MUTATIONS_FILE)
+    scores = calculate_fitness_stats(
+        config, mutations_file_path, refseq, mutation_fitness_scores, samples_by_month
+    )
+    outfile = config.get_fitness_stats_outfile()
+    write_fitness_stats(scores, outfile)
+    print("All sample monthly fitness stats written to: ", outfile)
 
 
 if __name__ == "__main__":
