@@ -10,28 +10,10 @@ from third_party.nuc_mutations_to_aa_mutations_modified import (
     nuc_mutations_to_aa_mutations_modified,
     load_reference_sequence_modified,
 )
-from util import Config, try_download, URLS
+from util import Config, try_download, URLS, get_fitness_scores
 
 CONFIG = "config.yaml"
 
-def pyro_fitness_line_parser(line):
-    """ """
-    splitline = line.split("\t")
-    mutation = splitline[1]
-    delta_log_R = round(float(splitline[4]), 10)
-    return mutation, delta_log_R
-
-def bvas_fitness_line_parser(line):
-    """ """
-    splitline = line.split(",")
-    mutation = splitline[0]
-    beta = round(float(splitline[2]), 10)
-    return mutation, beta
-
-FITNESS_FILE_PARSER = {
-    "PYRO": pyro_fitness_line_parser,
-    "BVAS": bvas_fitness_line_parser,
-}
 
 def get_nt_mutations(vcf_filename):
     """
@@ -62,31 +44,6 @@ def get_nt_mutations(vcf_filename):
     return nodes_ids
 
 
-def load_fitness_scores(file, fitness_line_parser):
-    scores = {}
-    fp = open(file, "r")
-    # Skip over file header
-    next(fp)
-    for line in fp:
-        mutation, score = fitness_line_parser(line)
-        scores[mutation] = score
-    fp.close()
-    return scores
-
-def get_fitness_scores(config):
-    """
-    TODO:
-    """
-    model = config.CALCULATE_FITNESS_USING
-    parser = FITNESS_FILE_PARSER[model]
-    if model == "PYRO":
-        # Calculate fitness using PYRO model
-        return load_fitness_scores(config.PYRO_MUTATIONS_FILE, parser)
-    else:
-        # Calculate fitness using BVAS model
-        try_download(config.BVAS_MUTATIONS_FILE, URLS["bvas-fitness"])
-        return load_fitness_scores(config.BVAS_MUTATIONS_FILE, parser)
-
 def compute_fitness(aa_mutations, mutations_r_ra):
     """
     TODO:
@@ -98,7 +55,7 @@ def compute_fitness(aa_mutations, mutations_r_ra):
         if m not in mutations_r_ra:
             continue
         fitness += mutations_r_ra[m]
-    return float(math.exp(fitness))
+    return 1 + fitness
 
 
 def main():
@@ -110,7 +67,7 @@ def main():
         raise FileNotFoundError(f"Data Directory not found: '{data_dir}'")
 
     print("Calculating fitness using: ", config.CALCULATE_FITNESS_USING)
-    # Get amino acid mutation fitness scores from PyR0
+    # Get amino acid mutation fitness scores from PyR0 or BVAS
     mutation_fitness_scores = get_fitness_scores(config)
     refseq = load_reference_sequence_modified(data_dir, "reference.fasta")
 

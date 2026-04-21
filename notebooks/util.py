@@ -34,6 +34,54 @@ URLS = {
 }
 
 
+def pyro_fitness_line_parser(line):
+    """ """
+    splitline = line.split("\t")
+    mutation = splitline[1]
+    delta_log_R = round(float(splitline[4]), 10)
+    return mutation, delta_log_R
+
+
+def bvas_fitness_line_parser(line):
+    """ """
+    splitline = line.split(",")
+    mutation = splitline[0]
+    beta = round(float(splitline[2]), 10)
+    return mutation, beta
+
+
+FITNESS_FILE_PARSER = {
+    "PYRO": pyro_fitness_line_parser,
+    "BVAS": bvas_fitness_line_parser,
+}
+
+
+def load_fitness_scores(file, fitness_line_parser):
+    """ """
+    scores = {}
+    fp = open(file, "r")
+    # Skip over file header
+    next(fp)
+    for line in fp:
+        mutation, score = fitness_line_parser(line)
+        scores[mutation] = score
+    fp.close()
+    return scores
+
+
+def get_fitness_scores(config):
+    """TODO:"""
+    model = config.CALCULATE_FITNESS_USING
+    parser = FITNESS_FILE_PARSER[model]
+    if model == "PYRO":
+        # Calculate fitness using PYRO model
+        return load_fitness_scores(config.PYRO_MUTATIONS_FILE, parser)
+    else:
+        # Calculate fitness using BVAS model
+        try_download(config.BVAS_MUTATIONS_FILE, URLS["bvas-fitness"])
+        return load_fitness_scores(config.BVAS_MUTATIONS_FILE, parser)
+
+
 def get_months():
     """
     Get a list of all the months considered in this analysis.
@@ -97,6 +145,10 @@ class Config:
         self.MONTHLY_FITNESS_STATS_FILE = os.path.join(
             data_dir, config["MONTHLY_FITNESS_STATS"]
         )
+        self.MONTHLY_FITNESS_STATS_BVAS_FILE = os.path.join(
+            data_dir, config["MONTHLY_FITNESS_STATS_BVAS"]
+        )
+
         # Fitness scores for all substitution mutations found in the MAT
         self.SUBTITUTION_SCORES = os.path.join(data_dir, config["SUBTITUTION_SCORES"])
         # self.__check_files_exist()
@@ -129,6 +181,14 @@ class Config:
         else:
             # Return BVAS fitness output file
             return self.RECOMB_TRIOS_BVAS_FITNESS_FILE
+
+    def get_fitness_stats_outfile(self):
+        """"""
+        if self.CALCULATE_FITNESS_USING == "PYRO":
+            return self.MONTHLY_FITNESS_STATS_FILE
+        else:
+            # Return BVAS fitness output file
+            return self.MONTHLY_FITNESS_STATS_BVAS_FILE
 
 
 def download(url, local_filepath):
@@ -191,6 +251,7 @@ def download_data_files(data_dir, override=False):
     FILES = {
         "cases": "time_series_covid19_confirmed_global.csv",
         "fitness": "mutations.tsv",
+        "bvas-fitness": "allele_summary.csv",
     }
     for k, name in FILES.items():
         path = "{}/{}".format(data_dir, name)
@@ -513,6 +574,7 @@ def get_recombinant_trios_fitness_v2(config):
     model = config.CALCULATE_FITNESS_USING
     return pl.read_csv(config.get_fitness_outfile())
 
+
 def get_recombinant_trios_fitness(fitness_results_path):
     """
     TODO:
@@ -763,6 +825,19 @@ def get_included_recombinants(rivet_results_filename):
     passing_nodes, passing_rows = get_passing_recombs(df)
     add_indel_flagged_recombs(df, passing_nodes, passing_rows)
     return passing_nodes, passing_rows
+
+
+def partition_samples_by_month(samples):
+    """ """
+    months = get_months()
+    samples_by_month = {month: [] for month in months}
+    for sample, month in samples.items():
+        # Skip samples from months outside of month range of interest,
+        # or internal nodes
+        if "node_" in sample or month not in samples_by_month.keys():
+            continue
+        samples_by_month[month].append(sample)
+    return samples_by_month
 
 
 def get_chronumental_dates(chronumental_filename):
@@ -1056,12 +1131,12 @@ def get_recombination_fitness_stats(df):
     """
     TODO: docs
     """
-    mean_fitness = df.select(
-        pl.col("RecombFitnessNormalizedByMaxParents").mean()
-    ).item()
-    std_dev_fitness = df.select(
-        pl.col("RecombFitnessNormalizedByMaxParents").std()
-    ).item()
+    NORM_BY_MAX_PARENT_COL = "RecombFitnessNormalizedByMaxParents"
+    if NORM_BY_MAX_PARENT_COL not in df.columns:
+        return {}
+
+    mean_fitness = df.select(pl.col(NORM_BY_MAX_PARENT_COL).mean()).item()
+    std_dev_fitness = df.select(pl.col(NORM_BY_MAX_PARENT_COL).std()).item()
     return {"mean": mean_fitness, "stddev": std_dev_fitness}
 
 
