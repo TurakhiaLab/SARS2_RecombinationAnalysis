@@ -4,6 +4,7 @@ Helper methods to perform the recombinant analysis in 'analysis.ipynb' notebook.
 
 import polars as pl
 from datetime import datetime
+from scipy.stats import pearsonr
 import pickle
 import os
 import pprint
@@ -173,6 +174,9 @@ class Config:
             return self.RECOMBINATION_STATS_FILE
         else:
             return self.RECOMBINATION_STATS_FILE_BVAS
+
+    def get_fitness_model_type(self):
+        return self.CALCULATE_FITNESS_USING
 
     def get_fitness_outfile(self):
         """"""
@@ -1247,3 +1251,13 @@ def get_recombinant_nodes(rivet_results_filename, sample_months):
 
 def write_results(outfile):
     pass
+
+
+def calculate_pearson_correlation(df, col_name1, col_name2):
+    data = df.select([col_name1, col_name2])
+    r, p_value = pearsonr(data[col_name1], data[col_name2])
+    return r, p_value
+
+
+def as_percent(num, total):
+    return (num / total) * 100
