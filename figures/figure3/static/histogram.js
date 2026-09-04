@@ -42,6 +42,9 @@ async function histogram(svg, config) {
   const snv_scores = aggregate_scores(data);
   const MAX_SCORE = d3.max(snv_scores);
 
+  const scoreSkewness = ss.sampleSkewness(snv_scores);
+  console.log("Substitution Score Skewness:", scoreSkewness);
+
   // Histogram bins constants
   const binWidth = 0.05;
   const domainStart = 0.0;

@@ -1,6 +1,7 @@
 import {
   csvToArray,
   getMonthsCollection,
+  getScoresMinByParents,
   minMaxValueFromColumn,
   roundTo,
   roundUpTo,
@@ -32,6 +33,23 @@ function getXDomain(config, data) {
   }
 }
 
+function getColorGradientCaps(data, statLookup, config, centerPoint = 1.0) {
+  let minFoldChange = Infinity;
+  let maxFoldChange = -Infinity;
+  data.forEach((d) => {
+    const month = d.Month;
+    if (statLookup[month] && statLookup[month].Mean > 0) {
+      const fc = d[config["RawScore"]] / statLookup[month].Mean;
+      if (fc > maxFoldChange) maxFoldChange = fc;
+      if (fc < minFoldChange) minFoldChange = fc;
+    }
+  });
+  const maxDistance = centerPoint - minFoldChange;
+  const COLOR_MAX_CAP = centerPoint + maxDistance;
+  const COLOR_MIN_CAP = minFoldChange;
+  return [COLOR_MIN_CAP, COLOR_MAX_CAP];
+}
+
 async function scatter_with_marginal_histograms(svg, config) {
   // Constants
   const width =
@@ -44,7 +62,6 @@ async function scatter_with_marginal_histograms(svg, config) {
   const SHIFT_POINTS_RIGHT = width / 2;
   const BAR_PADDING = 2;
   const divID = config["scatterDivID"];
-  // Function to color scatter plot points by
   const getColorByScore = config["colorby"];
 
   const YEAR_MONTH = getMonthsCollection("2023-02");
@@ -64,9 +81,7 @@ async function scatter_with_marginal_histograms(svg, config) {
       alert("Month already recorded in stats");
     }
     statLookup[key] = {
-      Percentile50: parseFloat(d.Percentile50),
-      Percentile75: parseFloat(d.Percentile75),
-      Percentile99: parseFloat(d.Percentile99),
+      Mean: parseFloat(d.Mean),
     };
   });
 
@@ -74,6 +89,20 @@ async function scatter_with_marginal_histograms(svg, config) {
   const divergence_hd_scores = csvToArray(recombData, "ParentsHD", parseInt);
   const divergence_avg = Math.ceil(ss.mean(divergence_hd_scores));
   const scores = csvToArray(recombData, config["Score"], parseFloat);
+
+  const scores_by_min_parents = csvToArray(
+    recombData,
+    config["Score"],
+    parseFloat,
+  );
+
+  const scoreSkewness = ss.sampleSkewness(scores);
+  console.log("X-Axis Score Skewness:", scoreSkewness);
+
+  const scoreSkewnessByMin = ss.sampleSkewness(
+    getScoresMinByParents(recombData, config),
+  );
+  console.log("Norm by Min Parent Score Skewness:", scoreSkewnessByMin);
 
   const [minDiversity, maxDiversity] = minMaxValueFromColumn(
     recombData,
@@ -87,12 +116,21 @@ async function scatter_with_marginal_histograms(svg, config) {
     parseFloat,
   );
 
+  const [COLOR_MIN_CAP, COLOR_MAX_CAP] = getColorGradientCaps(
+    recombData,
+    statLookup,
+    config,
+  );
+
+  const colorScale = d3
+    .scaleSequential(d3.interpolateViridis)
+    .domain([COLOR_MIN_CAP, COLOR_MAX_CAP]);
+
   const [minScore, maxScore] = getXDomain(config, recombData);
   const xDomainEnd = roundUpTo(maxScore, 1);
 
   // Define scales
   const x = d3.scaleLinear().domain([0, xDomainEnd]).range([0, SCATTER_WIDTH]);
-
   const y = d3
     .scaleLinear()
     .domain([0.0, maxParentHD + 1.0])
@@ -357,11 +395,21 @@ async function scatter_with_marginal_histograms(svg, config) {
       // Y-axis point will be the divergence of parents
       return y(d.ParentsHD);
     })
-    .attr("r", SCATTER_RADIUS)
+    .attr("r", function (d) {
+      // const nid = d["Node"];
+      return SCATTER_RADIUS;
+    })
     .style("fill", function (d) {
       const recomb_fitness = d[config["RawScore"]];
       const month = d.Month;
-      return getColorByScore(recomb_fitness, month, statLookup);
+      const nid = d["Node"];
+      const meanFitness = statLookup[month]?.Mean;
+      if (meanFitness && meanFitness > 0) {
+        const foldChange = recomb_fitness / meanFitness;
+        const clampedFoldChange = Math.min(foldChange, COLOR_MAX_CAP);
+        return colorScale(clampedFoldChange);
+      }
+      return "gray";
     });
 
   // Add horizontal dashed line at average divergence on y-axis
@@ -391,37 +439,82 @@ async function scatter_with_marginal_histograms(svg, config) {
 
   // Add plot legend
   if (config["legend"]) {
-    const COLORS = d3.scaleOrdinal().range(config["legendColors"]);
-    let legend = svg
-      .selectAll("labels")
-      .data(config["legendLabels"])
+    const legendWidth = 220;
+    const legendHeight = 20;
+    const legendX = config["legendCX"] - 60;
+    const legendY = config["legendCY"];
+    const defs = svg.append("defs");
+    defs.selectAll("#continuous-gradient").remove();
+
+    const linearGradient = defs
+      .append("linearGradient")
+      .attr("id", "continuous-gradient")
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "100%")
+      .attr("y2", "0%");
+    const scaleDomain = colorScale.domain();
+    const legendMin = scaleDomain[0];
+    const legendMax = scaleDomain[1];
+    const numStops = 10;
+    const colorStops = d3.range(numStops).map((i) => {
+      const t = i / (numStops - 1);
+      const val = legendMin + t * (legendMax - legendMin);
+      return {
+        offset: `${t * 100}%`,
+        color: colorScale(val),
+      };
+    });
+
+    linearGradient
+      .selectAll("stop")
+      .data(colorStops)
       .enter()
+      .append("stop")
+      .attr("offset", (d) => d.offset)
+      .attr("stop-color", (d) => d.color);
+
+    svg.selectAll(".legend-group").remove();
+
+    const legendGroup = svg
       .append("g")
-      .attr("transform", function (d, i) {
-        return "translate(0," + i * 35 + ")";
+      .attr("class", "legend-group")
+      .attr("transform", `translate(${legendX}, ${legendY})`);
+    legendGroup
+      .append("rect")
+      .attr("width", legendWidth)
+      .attr("height", legendHeight)
+      .style("fill", "url(#continuous-gradient)")
+      .style("stroke", "black")
+      .style("stroke-width", "0.5px");
+
+    const legendScale = d3
+      .scaleLinear()
+      .domain([legendMin, legendMax])
+      .range([0, legendWidth]);
+
+    const legendAxis = d3
+      .axisBottom(legendScale)
+      .ticks(5)
+      .tickFormat((d) => {
+        return d.toFixed(1) + "x";
       });
 
-    const LEGEND_CIRCLE_RADIUS = 15;
-    legend
-      .append("circle")
-      .attr("cx", 1240)
-      .attr("cy", 200)
-      .attr("r", LEGEND_CIRCLE_RADIUS)
-      .attr("stroke", "black")
-      .attr("fill", COLORS);
-    legend
+    legendGroup
+      .append("g")
+      .attr("transform", `translate(0, ${legendHeight})`)
+      .call(legendAxis)
+      .style("font-size", "14px");
+    legendGroup
       .append("text")
-      .attr("x", 1260)
-      .attr("y", 195)
-      .attr("dy", ".50em")
-      .attr("fill", "black")
-      .style("font-size", "20px")
+      .attr("x", 0)
+      .attr("y", -10)
+      .text("Fitness Fold-Change vs Monthly Mean")
+      .style("font-size", "18px")
       .style("font-weight", "bold")
-      .style("text-anchor", "start")
-      .text(function (d) {
-        return d;
-      });
+      .style("fill", "black");
   }
+
   return svg;
 }
 export { scatter_with_marginal_histograms };

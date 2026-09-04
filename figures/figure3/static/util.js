@@ -22,6 +22,19 @@ function getMonth(month) {
   return MONTHS[parseInt(month)];
 }
 
+function getScoresMinByParents(data, config) {
+  let scores = [];
+  data.forEach((d) => {
+    const rawRecombScore = d[config["RawScore"]];
+    const donorScore = d[config["DonorScore"]];
+    const acceptorScore = d[config["AcceptorScore"]];
+    const minParentalFitness = Math.min(donorScore, acceptorScore);
+    const recombNormByMin = rawRecombScore / minParentalFitness;
+    scores.push(recombNormByMin);
+  });
+  return scores;
+}
+
 function roundTo(num, places) {
   const factor = Math.pow(10, places);
   return Math.round(num * factor) / factor;
@@ -261,4 +274,5 @@ export {
   roundUpTo,
   max,
   ASSERT_EQUAL_ARRAYS,
+  getScoresMinByParents,
 };
