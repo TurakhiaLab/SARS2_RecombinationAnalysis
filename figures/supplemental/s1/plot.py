@@ -1,5 +1,5 @@
 """
-Script to create a linear regression plot comparing the earliest descendant date
+Script to create a heatmap and linear regression plot comparing the earliest descendant date
 obtained from sample metadata for each recombinant, verus the Chronumental-inferred
 date for each recombinant.
 """
@@ -10,6 +10,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import os
 from scipy import stats
+from scipy.stats import pearsonr
 
 # Dates data
 DATES_FILENAME = "data/dates.csv"
@@ -18,7 +19,7 @@ METADATA_COL = "MetadataMonth"
 CHRON_COL = "ChronMonth"
 
 PLOT_CONFIG = {
-    "save_as": "img/date_scatter.svg",
+    "save_as": "img/date_heatmap.svg",
     "x_label": "Metadata Earliest Descendant Date (Month)",
     "y_label": "Chronumental Inferred Emergence Date (Month)",
 }
@@ -79,11 +80,10 @@ def label_encode(arr1, arr2):
     return value_to_int_mapping
 
 
-def scatterplot(df, encoded_labels, SAVE=None):
+def heatmap(df, encoded_labels, SAVE=None):
     """
-    Plots a Seaborn Regression plot (with scatter plots enabled),
-    with a kernel density estimate plot comparing the relationship between
-    the Metadata dates and Chronumental inferred dates (months).
+    Plots a heatmap with a regression line comparing the
+    relationship between metadata dates and Chronumental inferred dates.
 
     Parameters
     ----------
@@ -96,9 +96,7 @@ def scatterplot(df, encoded_labels, SAVE=None):
     SAVE: str (optional)
         The output file path to save the plot as an SVG.
     """
-    # Plot settings
     sns.set_style("darkgrid")
-    sns.set_palette("muted")
     sns.set_context("paper")
 
     plt.figure(figsize=(12, 8))
@@ -106,24 +104,47 @@ def scatterplot(df, encoded_labels, SAVE=None):
     x_label = PLOT_CONFIG["x_label"]
     y_label = PLOT_CONFIG["y_label"]
 
-    sns.kdeplot(x=df[x_label], y=df[y_label], fill=True)
-    plt.tight_layout()
+    r_value, p_value = pearsonr(df[x_label], df[y_label])
+    print(f"Pearson r: {r_value}, p-value: {p_value}")
+
+    sns.histplot(
+        data=df,
+        x=x_label,
+        y=y_label,
+        discrete=(True, True),
+        cbar=True,
+        cbar_kws={"label": "Number of Recombinants"},
+        cmap="Blues",
+    )
+    slope, intercept, r_value, p_value, std_err = stats.linregress(
+        df[x_label], df[y_label]
+    )
+
     sns.regplot(
         x=df[x_label],
         y=df[y_label],
-        scatter=True,
-        scatter_kws={"color": "orange"},
-        line_kws={"color": "red"},
+        scatter=False,
+        line_kws={
+            "color": "red",
+        },
     )
 
+    min_val = min(df[x_label].min(), df[y_label].min())
+    max_val = max(df[x_label].max(), df[y_label].max())
+    plt.plot(
+        [min_val, max_val],
+        [min_val, max_val],
+        color="grey",
+        linestyle="--",
+        label="x = y Reference",
+    )
     labels = list(encoded_labels.keys())
     int_encoded_labels = list(encoded_labels.values())
-    plt.xticks(ticks=int_encoded_labels, labels=labels)
+    plt.xticks(ticks=int_encoded_labels, labels=labels, rotation=65)
     plt.yticks(ticks=int_encoded_labels, labels=labels)
-    plt.xticks(rotation=65)
-    plt.xlabel(x_label, fontsize=12, labelpad=30, ha="center")
-    plt.ylabel(y_label, fontsize=12, labelpad=30, ha="center")
-    plt.grid(True, linestyle="--", linewidth=0.5, color="lightgrey", alpha=1.0)
+    plt.xlabel(x_label, fontsize=12, labelpad=15, ha="center")
+    plt.ylabel(y_label, fontsize=12, labelpad=15, ha="center")
+    plt.legend(loc="upper left")
     plt.tight_layout()
     # Save plot as SVG or display
     if SAVE:
@@ -131,9 +152,6 @@ def scatterplot(df, encoded_labels, SAVE=None):
     else:
         plt.show()
 
-    slope, intercept, r_value, p_value, std_err = stats.linregress(
-        df[x_label], df[y_label]
-    )
     print("Slope: ", slope)
     print("y-intercept: ", intercept)
     print("R-value: ", r_value)
@@ -154,7 +172,7 @@ def main():
     df = pl.DataFrame(
         {PLOT_CONFIG["y_label"]: chron_values, PLOT_CONFIG["x_label"]: metadata_values}
     )
-    scatterplot(df, encoded_labels, PLOT_CONFIG["save_as"])
+    heatmap(df, encoded_labels, PLOT_CONFIG["save_as"])
     print("Plot successfully saved: {}".format(PLOT_CONFIG["save_as"]))
     return
 
