@@ -1261,3 +1261,23 @@ def calculate_pearson_correlation(df, col_name1, col_name2):
 
 def as_percent(num, total):
     return (num / total) * 100
+
+
+def calculate_irr(model_result):
+    irr = np.exp(model_result.params)
+    p_values = model_result.pvalues
+    conf_interval = model_result.conf_int()
+    summary_df = pd.DataFrame(
+        {
+            "IRR": irr,
+            "PercentChange": (irr - 1) * 100,
+            "pvalue": p_values,
+            "LowerCI95": np.exp(conf_interval[0]),
+            "UpperCI95": np.exp(conf_interval[1]),
+        }
+    )
+    return summary_df
+
+
+def compute_z_score(df, col_name):
+    return (df[col_name] - df[col_name].mean()) / df[col_name].std()
