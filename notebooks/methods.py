@@ -71,3 +71,47 @@ class RecombAnalysis:
 
     def correlation_matrix(self):
         return self.df.to_pandas().corr()
+
+
+class RecombBVASAnalysis:
+    def __init__(self, config):
+        self.config = config
+        print("Loading all datasets for analysis")
+        start_time = time.perf_counter()
+
+        # Get monthly fitness stats as calculated by BVAS
+        self.monthly_fitness_stats = get_monthly_fitness_stats(
+            config.MONTHLY_FITNESS_STATS_BVAS_FILE
+        )
+
+        recomb_data = get_recombinant_data(config.RECOMBINATION_STATS_FILE_BVAS)
+        # Merge monthly fitness stats data with individual recombinant fitness stats data
+        self.recomb_data = recomb_data.join(self.monthly_fitness_stats, on="Month")
+
+        OUTFILE = os.path.join(self.config.DATA_DIR, "recomb_fitness_normalized_bvas.csv")
+        self.norm_fitness = calc_norm_fitness(self.recomb_data, OUTFILE)
+
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        print(f"Data loaded, analysis ready. Elapsed time: {elapsed_time:.4f} seconds")
+
+    def getRecombinationFitnessStats(self):
+        """ """
+        return get_recombination_fitness_stats(self.recomb_data)
+
+    def getRecombinationMinFitnessStats(self):
+        """ """
+        return get_recombination_min_fitness_stats(self.recomb_data)
+
+    def getNormFitness(self):
+        """ """
+        return self.norm_fitness
+
+    def getMonthlyStats(self):
+        """ """
+        return self.monthly_fitness_stats
+
+    def getRecombData(self):
+        """ """
+        return self.recomb_data
+

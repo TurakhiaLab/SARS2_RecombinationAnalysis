@@ -2,34 +2,51 @@
 Script to get set of single-nucelotide mutations from each sample in the given MAT.
 TODO: docs
 """
+
 import bte
 import os
-from util import Config, download_data_files
+from util import Config, download_data_files, file_exists
 import pickle
-import dbm
 import glob
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 CONFIG = "config.yaml"
-PICKLED_SAMPLE_MUTATIONS_FILE = "all_sample_mutations.pkl"
+CACHED_SAMPLE_MUTATIONS_FILE = "all_sample_mutations.parquet"
+
 
 def write_mutations_file(tree, filename):
-    """
-    # TODO:
-    """
+    """"""
     leaves = tree.get_leaves_ids()
-
-    with dbm.open(filename, 'c') as db:
-        i = 0
-        interval = 100_000
-        for sample in leaves:
-            # Get the nucleotide mutations for the given sample
+    # Batch size of samples to process for logging
+    batch_size = 50_000
+    sample_ids = []
+    mutations_lists = []
+    schema = pa.schema(
+        [("sample_id", pa.string()), ("mutations", pa.list_(pa.string()))]
+    )
+    print("Writing output file: ", filename)
+    with pq.ParquetWriter(filename, schema) as writer:
+        for i, sample in enumerate(leaves):
             haplotype = tree.get_haplotype(sample)
-            value = pickle.dumps({'mutations': haplotype})
-            db[sample.encode('utf-8')] = value
+            sample_ids.append(sample)
+            mutations_lists.append([str(m) for m in haplotype])
 
-            if (i + 1) % interval == 0:
+            # Log
+            if (i + 1) % batch_size == 0:
+                batch_table = pa.Table.from_arrays(
+                    [pa.array(sample_ids), pa.array(mutations_lists)], schema=schema
+                )
+                writer.write_table(batch_table)
+                sample_ids.clear()
+                mutations_lists.clear()
                 print(f"{i + 1} samples processed.")
-            i+=1
+
+        if sample_ids:
+            batch_table = pa.Table.from_arrays(
+                [pa.array(sample_ids), pa.array(mutations_lists)], schema=schema
+            )
+            writer.write_table(batch_table)
 
 
 def main():
@@ -39,19 +56,24 @@ def main():
     # Ensure data directory is found
     if not os.path.isdir(data_dir):
         raise FileNotFoundError(f"Data Directory not found: '{data_dir}'")
-    
-    mutations_file_path = os.path.join(data_dir, PICKLED_SAMPLE_MUTATIONS_FILE)
-    mutations_db_files = glob.glob(f'{mutations_file_path}.*')
+
+    mutations_file_path = os.path.join(data_dir, CACHED_SAMPLE_MUTATIONS_FILE)
 
     # Check if sample mutations database files have already been generated, if not create db
-    if not mutations_db_files:
-        # Load MAT
+    if not file_exists(mutations_file_path):
+        if not file_exists(config.MAT):
+            raise FileNotFoundError(f"MAT file not found: '{config.MAT}'")
+
         print("Loading MAT file: ", config.MAT)
         tree = bte.MATree(config.MAT)
+
+        print(f"Writing mutations to {mutations_file_path}.")
         write_mutations_file(tree, mutations_file_path)
+    else:
+        print(f"Database already exists at: {mutations_file_path}")
+
     print("All samples mutations file written to disk: ", mutations_file_path)
 
 
 if __name__ == "__main__":
     main()
-

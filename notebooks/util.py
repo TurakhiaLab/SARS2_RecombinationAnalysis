@@ -4,6 +4,7 @@ Helper methods to perform the recombinant analysis in 'analysis.ipynb' notebook.
 
 import polars as pl
 from datetime import datetime
+from scipy.stats import pearsonr
 import pickle
 import os
 import pprint
@@ -30,7 +31,56 @@ RIVET_CONFIG = {
 URLS = {
     "cases": "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",
     "fitness": "https://raw.githubusercontent.com/broadinstitute/pyro-cov/7d2829dc9c209399ecc188f2c87a881bdb09b221/paper/mutations.tsv",
+    "bvas-fitness": "https://raw.githubusercontent.com/broadinstitute/bvas/refs/heads/main/paper/09.13.23/allele_summary.csv",
 }
+
+
+def pyro_fitness_line_parser(line):
+    """ """
+    splitline = line.split("\t")
+    mutation = splitline[1]
+    delta_log_R = round(float(splitline[4]), 10)
+    return mutation, delta_log_R
+
+
+def bvas_fitness_line_parser(line):
+    """ """
+    splitline = line.split(",")
+    mutation = splitline[0]
+    beta = round(float(splitline[2]), 10)
+    return mutation, beta
+
+
+FITNESS_FILE_PARSER = {
+    "PYRO": pyro_fitness_line_parser,
+    "BVAS": bvas_fitness_line_parser,
+}
+
+
+def load_fitness_scores(file, fitness_line_parser):
+    """ """
+    scores = {}
+    fp = open(file, "r")
+    # Skip over file header
+    next(fp)
+    for line in fp:
+        mutation, score = fitness_line_parser(line)
+        scores[mutation] = score
+    fp.close()
+    return scores
+
+
+def get_fitness_scores(config):
+    """TODO:"""
+    model = config.CALCULATE_FITNESS_USING
+    parser = FITNESS_FILE_PARSER[model]
+    if model == "PYRO":
+        # Calculate fitness using PYRO model
+        return load_fitness_scores(config.PYRO_MUTATIONS_FILE, parser)
+    else:
+        # Calculate fitness using BVAS model
+        try_download(config.BVAS_MUTATIONS_FILE, URLS["bvas-fitness"])
+        return load_fitness_scores(config.BVAS_MUTATIONS_FILE, parser)
 
 
 def get_months():
@@ -62,6 +112,7 @@ MONTHS = get_months()
 
 class Config:
     RECOMB_TRIOS_FITNESS_FILE = "rivet_trios_fitness_data.csv"
+    RECOMB_TRIOS_BVAS_FITNESS_FILE = "rivet_trios_bvas_fitness_data.csv"
     PANGO_RECOMBS_FILE = "pango_recombs_data.csv"
 
     def __init__(self, config_filename):
@@ -87,27 +138,61 @@ class Config:
         self.RECOMBINATION_STATS_FILE = os.path.join(
             data_dir, config["RECOMBINATION_STATS_FILE"]
         )
+        self.RECOMBINATION_STATS_FILE_BVAS = os.path.join(
+            data_dir, config["RECOMBINATION_STATS_FILE_BVAS"]
+        )
+
         # Fitness stats each month for all circulating samples
         self.MONTHLY_FITNESS_STATS_FILE = os.path.join(
             data_dir, config["MONTHLY_FITNESS_STATS"]
         )
+        self.MONTHLY_FITNESS_STATS_BVAS_FILE = os.path.join(
+            data_dir, config["MONTHLY_FITNESS_STATS_BVAS"]
+        )
+
         # Fitness scores for all substitution mutations found in the MAT
         self.SUBTITUTION_SCORES = os.path.join(data_dir, config["SUBTITUTION_SCORES"])
-        #self.__check_files_exist()
+        # self.__check_files_exist()
         self.MAT_DATE = os.path.join(data_dir, config["MAT_DATE"])
         self.MAT = os.path.join(data_dir, config["MAT"])
         self.METADATA = os.path.join(data_dir, config["METADATA"])
         self.PANGO_RECOMBS_FILE = os.path.join(data_dir, Config.PANGO_RECOMBS_FILE)
 
         self.DATA_DIR = data_dir
-        # TODO: Old, can remove
-        #self.RERUN_CHRONUMENTAL = config["RERUN_CHRONUMENTAL"]
-        #self.RERUN_GENETIC_DIVERSITY = config["RERUN_GENETIC_DIVERSITY"]
+        self.BVAS_MUTATIONS_FILE = os.path.join(data_dir, config["BVAS_MUTATIONS_FILE"])
+        self.CALCULATE_FITNESS_USING = config["CALCULATE_FITNESS_USING"]
+        self.RERUN_CHRONUMENTAL = config["RERUN_CHRONUMENTAL"]
 
     def __check_files_exist(self):
         for name, value in self.__dict__.items():
             if not os.path.exists(value):
                 raise FileNotFoundError(f"The file '{value}' does not exist.")
+
+    def get_recombination_stats_outfile(self):
+        """"""
+        if self.CALCULATE_FITNESS_USING == "PYRO":
+            return self.RECOMBINATION_STATS_FILE
+        else:
+            return self.RECOMBINATION_STATS_FILE_BVAS
+
+    def get_fitness_model_type(self):
+        return self.CALCULATE_FITNESS_USING
+
+    def get_fitness_outfile(self):
+        """"""
+        if self.CALCULATE_FITNESS_USING == "PYRO":
+            return self.fitness_results_path
+        else:
+            # Return BVAS fitness output file
+            return self.RECOMB_TRIOS_BVAS_FITNESS_FILE
+
+    def get_fitness_stats_outfile(self):
+        """"""
+        if self.CALCULATE_FITNESS_USING == "PYRO":
+            return self.MONTHLY_FITNESS_STATS_FILE
+        else:
+            # Return BVAS fitness output file
+            return self.MONTHLY_FITNESS_STATS_BVAS_FILE
 
 
 def download(url, local_filepath):
@@ -134,6 +219,23 @@ def download(url, local_filepath):
         exit(1)
 
 
+def file_exists(filepath):
+    """TODO:"""
+    if os.path.exists(filepath):
+        return True
+    return False
+
+
+def try_download(filepath, url):
+    """
+    If file exists locally, do nothing. Otherwise try to download file from url.
+    """
+    if file_exists(filepath):
+        return
+    print(f"Filepath {filepath} doesn't exist locally, downloading from: {url}")
+    download(url, filepath)
+
+
 def download_data_files(data_dir, override=False):
     """
     Download all the necessary data files for the analysis.
@@ -153,6 +255,7 @@ def download_data_files(data_dir, override=False):
     FILES = {
         "cases": "time_series_covid19_confirmed_global.csv",
         "fitness": "mutations.tsv",
+        "bvas-fitness": "allele_summary.csv",
     }
     for k, name in FILES.items():
         path = "{}/{}".format(data_dir, name)
@@ -452,11 +555,11 @@ def merge_datafiles(config):
     assert sum(recombs_per_month_dict.values()) == len(recomb_nodes)
 
     # Load recombinant trios fitness file
-    recomb_trios_fitness_df = get_recombinant_trios_fitness(config.fitness_results_path)
+    recomb_trios_fitness_df = get_recombinant_trios_fitness_v2(config)
 
     trios_nt_mutations_dict = get_nt_mutations(config.RIVET_VCF_FILE)
+    outfile = config.get_recombination_stats_outfile()
 
-    outfile = config.RECOMBINATION_STATS_FILE
     # Format and merge all results together
     merge_datafiles_helper(
         recomb_metadata,
@@ -469,6 +572,11 @@ def merge_datafiles(config):
         outfile,
     )
     print("Recombination data written to: {}".format(outfile))
+
+
+def get_recombinant_trios_fitness_v2(config):
+    model = config.CALCULATE_FITNESS_USING
+    return pl.read_csv(config.get_fitness_outfile())
 
 
 def get_recombinant_trios_fitness(fitness_results_path):
@@ -721,6 +829,19 @@ def get_included_recombinants(rivet_results_filename):
     passing_nodes, passing_rows = get_passing_recombs(df)
     add_indel_flagged_recombs(df, passing_nodes, passing_rows)
     return passing_nodes, passing_rows
+
+
+def partition_samples_by_month(samples):
+    """ """
+    months = get_months()
+    samples_by_month = {month: [] for month in months}
+    for sample, month in samples.items():
+        # Skip samples from months outside of month range of interest,
+        # or internal nodes
+        if "node_" in sample or month not in samples_by_month.keys():
+            continue
+        samples_by_month[month].append(sample)
+    return samples_by_month
 
 
 def get_chronumental_dates(chronumental_filename):
@@ -1014,12 +1135,12 @@ def get_recombination_fitness_stats(df):
     """
     TODO: docs
     """
-    mean_fitness = df.select(
-        pl.col("RecombFitnessNormalizedByMaxParents").mean()
-    ).item()
-    std_dev_fitness = df.select(
-        pl.col("RecombFitnessNormalizedByMaxParents").std()
-    ).item()
+    NORM_BY_MAX_PARENT_COL = "RecombFitnessNormalizedByMaxParents"
+    if NORM_BY_MAX_PARENT_COL not in df.columns:
+        return {}
+
+    mean_fitness = df.select(pl.col(NORM_BY_MAX_PARENT_COL).mean()).item()
+    std_dev_fitness = df.select(pl.col(NORM_BY_MAX_PARENT_COL).std()).item()
     return {"mean": mean_fitness, "stddev": std_dev_fitness}
 
 
@@ -1130,3 +1251,33 @@ def get_recombinant_nodes(rivet_results_filename, sample_months):
 
 def write_results(outfile):
     pass
+
+
+def calculate_pearson_correlation(df, col_name1, col_name2):
+    data = df.select([col_name1, col_name2])
+    r, p_value = pearsonr(data[col_name1], data[col_name2])
+    return r, p_value
+
+
+def as_percent(num, total):
+    return (num / total) * 100
+
+
+def calculate_irr(model_result):
+    irr = np.exp(model_result.params)
+    p_values = model_result.pvalues
+    conf_interval = model_result.conf_int()
+    summary_df = pd.DataFrame(
+        {
+            "IRR": irr,
+            "PercentChange": (irr - 1) * 100,
+            "pvalue": p_values,
+            "LowerCI95": np.exp(conf_interval[0]),
+            "UpperCI95": np.exp(conf_interval[1]),
+        }
+    )
+    return summary_df
+
+
+def compute_z_score(df, col_name):
+    return (df[col_name] - df[col_name].mean()) / df[col_name].std()

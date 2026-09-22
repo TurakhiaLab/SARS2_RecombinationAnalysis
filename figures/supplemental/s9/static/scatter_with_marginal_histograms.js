@@ -1,7 +1,6 @@
 import {
   csvToArray,
   getMonthsCollection,
-  getScoresMinByParents,
   minMaxValueFromColumn,
   roundTo,
   roundUpTo,
@@ -90,31 +89,31 @@ async function scatter_with_marginal_histograms(svg, config) {
   const divergence_avg = Math.ceil(ss.mean(divergence_hd_scores));
   const scores = csvToArray(recombData, config["Score"], parseFloat);
 
-  const scores_by_min_parents = csvToArray(
+  const num_informative_sites_arr = csvToArray(
     recombData,
-    config["Score"],
-    parseFloat,
+    config["YAxisColumn"],
+    parseInt,
   );
+
+  num_informative_sites_arr.sort((a, b) => a - b);
+  console.log(
+    "Number of informative sites arr(SORTED): ",
+    num_informative_sites_arr,
+  );
+  const num_informative_sites_avg = Math.ceil(
+    ss.mean(num_informative_sites_arr),
+  );
+  const num_informative_sites_median = Math.ceil(
+    ss.median(num_informative_sites_arr),
+  );
+
+  const [minNumInformativeSites, maxNumInformativeSites] =
+    minMaxValueFromColumn(recombData, config["YAxisColumn"], parseFloat);
+  console.log("Min num informative sites: ", minNumInformativeSites);
+  console.log("Max num informative sites: ", maxNumInformativeSites);
 
   const scoreSkewness = ss.sampleSkewness(scores);
   console.log("X-Axis Score Skewness:", scoreSkewness);
-
-  const scoreSkewnessByMin = ss.sampleSkewness(
-    getScoresMinByParents(recombData, config),
-  );
-  console.log("Norm by Min Parent Score Skewness:", scoreSkewnessByMin);
-
-  const [minDiversity, maxDiversity] = minMaxValueFromColumn(
-    recombData,
-    "DiversityScore",
-    parseFloat,
-  );
-
-  const [minParentHD, maxParentHD] = minMaxValueFromColumn(
-    recombData,
-    "ParentsHD",
-    parseFloat,
-  );
 
   const [COLOR_MIN_CAP, COLOR_MAX_CAP] = getColorGradientCaps(
     recombData,
@@ -128,21 +127,27 @@ async function scatter_with_marginal_histograms(svg, config) {
 
   const [minScore, maxScore] = getXDomain(config, recombData);
   const xDomainEnd = roundUpTo(maxScore, 1);
+  const yDomainEnd = maxNumInformativeSites + 1.0;
 
   // Define scales
   const x = d3.scaleLinear().domain([0, xDomainEnd]).range([0, SCATTER_WIDTH]);
   const y = d3
     .scaleLinear()
-    .domain([0.0, maxParentHD + 1.0])
+    .domain([0.0, yDomainEnd])
     .range([height, SCATTER_HEIGHT]);
 
   // Define axes
   const xAxis = d3.axisBottom(x).ticks(20);
-  const yLeftAxis = d3.axisLeft(y).ticks(10);
+  let yLeftAxis;
+  if (config["showEveryYTick"]) {
+    yLeftAxis = d3.axisLeft(y).tickValues(d3.range(0, yDomainEnd + 1, 1));
+  } else {
+    yLeftAxis = d3.axisLeft(y).tickValues(d3.range(0, yDomainEnd + 1, 3));
+  }
 
-  const yHistBinWidth = 5;
+  const yHistBinWidth = 3;
   const yHistDomainStart = 0;
-  const yHistDomainEnd = 120;
+  const yHistDomainEnd = yDomainEnd;
   const yHistogramThresholds = d3
     .range(
       yHistDomainStart + yHistBinWidth,
@@ -153,7 +158,7 @@ async function scatter_with_marginal_histograms(svg, config) {
 
   let yHistogram = d3
     .bin()
-    .value((d) => d[config["ParentalDiversity"]])
+    .value((d) => d[config["YAxisColumn"]])
     .domain([yHistDomainStart, yHistDomainEnd])
     .thresholds(yHistogramThresholds);
 
@@ -365,7 +370,6 @@ async function scatter_with_marginal_histograms(svg, config) {
     .text(config["yAxisTitle"]);
 
   let maxVal = 0;
-
   // Create main scatter plot
   svg
     .append("g")
@@ -392,13 +396,9 @@ async function scatter_with_marginal_histograms(svg, config) {
       return x(d[config["Score"]]);
     })
     .attr("cy", function (d) {
-      // Y-axis point will be the divergence of parents
-      return y(d.ParentsHD);
+      return y(d[config["YAxisColumn"]]);
     })
-    .attr("r", function (d) {
-      // const nid = d["Node"];
-      return SCATTER_RADIUS;
-    })
+    .attr("r", SCATTER_RADIUS)
     .style("fill", function (d) {
       const recomb_fitness = d[config["RawScore"]];
       const month = d.Month;
@@ -412,11 +412,14 @@ async function scatter_with_marginal_histograms(svg, config) {
       return "gray";
     });
 
-  // Add horizontal dashed line at average divergence on y-axis
+  // Add horizontal dashed line at median number of informative sites on y-axis
   if (config["baseline"]) {
     svg
       .append("g")
-      .attr("transform", "translate(0, " + y(divergence_avg) + ")")
+      .attr(
+        "transform",
+        "translate(0, " + y(num_informative_sites_median) + ")",
+      )
       .append("line")
       .attr("x2", SCATTER_WIDTH)
       .style("stroke", "black")

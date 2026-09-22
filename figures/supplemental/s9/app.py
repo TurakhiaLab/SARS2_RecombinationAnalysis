@@ -5,7 +5,7 @@ Small Flask server for displaying figures in browser.
 from flask import Flask, render_template, abort
 import sys
 
-ALLOWED_PAGES = ["panela.html", "panelb.html", "panelc.html", "paneld.html"]
+ALLOWED_PAGES = ["fig.html"]
 DEFAULT_PORT = 8000
 ERROR_MESSAGE = "Provide one of the pages to view: {}".format(ALLOWED_PAGES)
 
