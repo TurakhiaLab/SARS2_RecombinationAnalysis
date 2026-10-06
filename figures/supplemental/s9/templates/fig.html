@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <title>Figure 3b</title>
+    <title>Figure S9</title>
     <meta charset="utf-8" />
   </head>
   <body>
@@ -43,23 +43,18 @@
       const config = {
         scatterDivID: "#scatterplot",
 
-        // Data files
-        // PYR0 data files
-        filename: "static/data/rivet_recombs_data.csv",
+        filename: "static/data/rivet_recombs_data_with_fitter_diversity.csv",
         statsFilename: "static/data/monthly_fitness_stats.csv",
 
-        // BVAS data files
-        //filename: "static/data/rivet_recombs_bvas_data.csv",
-        //statsFilename: "static/data/monthly_fitness_stats_bvas.csv",
-
         title: "",
-        yAxisTitle: "",
-        xAxisTitle: "",
+        yAxisTitle: "Realized Recomb Diversity",
+        xAxisTitle: "Relative Fitness (Normalized by Max Fitness of Parents)",
 
         // Plot settings
-        baseline: true, // Horizontal baseline for average parental divergence
+        baseline: true, // Horizontal baseline for median parental divergence
         verticalBaseline: true,
         axisTickLabelSize: "15",
+        showEveryYTick: false,
 
         // Define data columns
         RawScore: "Score",
@@ -68,6 +63,8 @@
         ClusterSize: "UShERClusterSize",
         ParentalDiversity: "ParentsHD",
         NormalizeByMinParents: false,
+        // Y-axis for this experiment
+        YAxisColumn: "RealizedRecombDiversity",
 
         fitnessHistConfig: {
           binWidth: 0.05,
@@ -99,8 +96,8 @@
         legendColors: ["red", "#124E78", "#93D3AE", "gray"],
 
         // Legend Positioning
-        legendCX: 1040,
-        legendCY: 300,
+        legendCX: 1200,
+        legendCY: 200,
         legendXAttr: 1260,
         legendYAttr: 197,
         legendFontSize: "20px",
@@ -123,7 +120,7 @@
 
       scatter_with_marginal_histograms(svg, config);
 
-      const svgFilename = "figure3b.svg";
+      const svgFilename = "figureS9.svg";
       document
         .getElementById("downloadButton")
         .addEventListener("click", () => {

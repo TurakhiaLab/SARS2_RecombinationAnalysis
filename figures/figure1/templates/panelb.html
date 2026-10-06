@@ -50,12 +50,15 @@
 
   <script type="module">
     import { downloadSVG } from "./static/util.js";
-    import { panelb } from "./static/panelb.js";
+    import { panelb } from "./static/panelb_and_c.js";
 
     const config = {
       divID: "#panelb",
       // Data file
       recombFilename: "static/data/rivet_recombs_data.csv",
+
+      // Null DRE Distribution data
+      dreDistributionFilename: "static/data/raw_monthly_null_dre.tsv",
 
       // Figure wide settings
       title: "",
@@ -72,6 +75,7 @@
       xAxisTitle: "",
       axisTickSize: "12px",
       rectOpacity: 1.0,
+      yDREAxisTitle: "Probability of Detection",
 
       // Plot legend config
       legend: false,
@@ -84,7 +88,7 @@
 
       margin: { top: 100, right: 500, bottom: 110, left: 100 },
       width: 1000,
-      height: 500,
+      height: 710,
     };
 
     const width = config["width"];
